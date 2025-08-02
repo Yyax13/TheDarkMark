@@ -1,0 +1,4 @@
+- [ ] Add session persistence to save sessions between restarts.
+- [ ] Modularize the framework to allow easy addition of new modules.
+- [ ] Add module for exfiltration of files from the client.
+- [ ] Add module to create executables with custom payloads.
