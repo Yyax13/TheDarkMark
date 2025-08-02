@@ -63,11 +63,11 @@ What things you need to install the software and how to install them.
 
 ## 🕵️‍♂️ Spoilers <a name = "spoilers"></a>
 
-![Main menu](demos/main.png)
-![Connection received](demos/connection_received.png)
+![Main menu](assets/demos/main.png)
+![Connection received](assets/demos/connection_received.png)
 <video width="600" controls>
-    <source src="demos/using.mp4" type="video/mp4">
-    Your .md parser do not support videos using HTML5 embed. Check <a href="demos/using.mp4">here</a>.
+    <source src="assets/demos/using.mp4" type="video/mp4">
+    Your .md parser do not support videos using HTML5 embed. Check <a href="assets/demos/using.mp4">here</a>.
 </video>
 
 ## 🎈 Usage <a name="usage"></a>
