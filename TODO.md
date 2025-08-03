@@ -1,4 +1,5 @@
-- [ ] Add session persistence to save sessions between restarts.
+- [ ] Refactor the pseudo shell to include more interactive usage.
 - [ ] Modularize the framework to allow easy addition of new modules.
+- [ ] Add session persistence to save sessions between restarts.
 - [ ] Add module for exfiltration of files from the client.
 - [ ] Add module to create executables with custom payloads.
