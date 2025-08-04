@@ -8,7 +8,7 @@ func PanicWarn(logContent string, newLine bool) {
 
 	}
 
-	logContentColored, _ := Colors(logContent, "yellow")
+	logContentColored, _ := Colors(logContent, "yellow_bold")
 	fmt.Printf("%v", logContentColored)
 
 }
@@ -19,7 +19,7 @@ func SysLog(logContent string, newLine bool) {
 
 	}
 	
-	logContentColored, _ := Colors(logContent, "white")
+	logContentColored, _ := Colors(logContent, "green")
 
 	fmt.Printf("%v", logContentColored)
 
