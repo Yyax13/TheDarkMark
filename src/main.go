@@ -155,16 +155,6 @@ func main() {
 				
 			}
 
-		case userInput == "clear":
-			newErr := misc.ForceClearStdout()
-			if newErr != nil {
-				misc.PanicWarn(fmt.Sprintf("An error ocurred during stdout forced clear: %v", newErr), false)
-				os.Exit(0)
-
-			}
-
-			misc.PrintBanner()
-
 		case userInput == "exit":
 			os.Exit(0)
 
