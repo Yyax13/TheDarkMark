@@ -1,18 +1,16 @@
-package listener
-
+package modules
 
 import (
 	// Built-in imports
+	"bufio"
 	"fmt"
+	"math/rand"
 	"net"
 	"sync"
-	"bufio"
-	"math/rand"
-	// "strings"
 
 	// Internal imports
 	"github.com/Yyax13/onTop-C2/src/misc"
-
+	"github.com/Yyax13/onTop-C2/src/types"
 )
 
 type ListenerSession struct {
@@ -59,11 +57,7 @@ func sessionHandler(sess *ListenerSession) {
 				break
 
 			}
-
-			// if !strings.HasSuffix(line, fmt.Sprintf("%v__%v___", sess.ID, sess.BotIP)) || !strings.HasPrefix(line, "$") {
-				sess.Outputs <- line
-
-			// }
+			sess.Outputs <- line
 
 		}
 
@@ -84,7 +78,46 @@ func sessionHandler(sess *ListenerSession) {
 
 }
 
-func StartListener(port int) {
+var ListenerOptions map[string]*types.Option = map[string]*types.Option{
+	"PORT": {
+		Name: "PORT",
+		Description: "The port to listen",
+		Required: true,
+		Value: nil,
+
+	},
+
+}
+
+var listener types.Module = types.Module{
+	Name: "Listener",
+	Description: "Listen to TCP connections in the port, specified in options",
+	Options: ListenerOptions,
+	Execute: StartListener,
+
+}
+
+func StartListener(opt map[string]*types.Option, _ ...any) {
+	portOption, ok := opt["PORT"]
+	if !ok {
+		misc.PanicWarn("The 'port' option is unset", true)
+		return
+
+	}
+
+	port, err := misc.AnyToInt(portOption.Value)
+	if err != nil {
+		misc.PanicWarn("The 'port' option value isn't a number\n", true)
+		return
+
+	}
+
+	if !(port > 1024 && port < 65535) {
+		misc.PanicWarn("The 'port' option value isn't valid, it must be between 1024 and 65535\n", true)
+		return
+
+	}
+
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		misc.PanicWarn(fmt.Sprintf("Some error ocurred: %v", err.Error()), true)
@@ -121,5 +154,10 @@ func StartListener(port int) {
 		ch <- conn
 		
 	}
+
+}
+
+func init() {
+	RegisterNewModule(&listener)
 
 }

