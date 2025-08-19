@@ -6,7 +6,7 @@
 <h1 align="center" style="font-size: 45px;">onTop C2</h1>
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-0.1.0B-red)
+![Version](https://img.shields.io/badge/Version-0.1.1B-red)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](/LICENSE)
 
 </div>

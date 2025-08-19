@@ -90,14 +90,15 @@ var ListenerOptions map[string]*types.Option = map[string]*types.Option{
 }
 
 var listener types.Module = types.Module{
-	Name: "Listener",
+	Name: "listener",
 	Description: "Listen to TCP connections in the port, specified in options",
+	Parallel: true,
 	Options: ListenerOptions,
 	Execute: StartListener,
 
 }
 
-func StartListener(opt map[string]*types.Option, _ ...any) {
+func StartListener(opt map[string]*types.Option) {
 	portOption, ok := opt["PORT"]
 	if !ok {
 		misc.PanicWarn("The 'port' option is unset", true)

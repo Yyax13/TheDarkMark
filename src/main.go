@@ -12,8 +12,13 @@ import (
 )
 
 func main() {
-	toolName, _ := misc.Colors("onTopC2", "black")
-	promptSignal, _ := misc.Colors("->", "white")
+	var mainEnv types.MainEnvType = types.MainEnvType{
+		Module: &types.Module{},
+		
+	}
+
+	toolName, _ := misc.Colors("onTopC2", "red")
+	promptSignal, _ := misc.Colors("▶▶", "white_bold")
 	prompt := fmt.Sprintf("%v %v ", toolName, promptSignal)
 
 	newErr := misc.ForceClearStdout()
@@ -26,18 +31,33 @@ func main() {
 	misc.PrintBanner()
 	misc.InitInterruptHandler()
 	stdinScanner := bufio.NewScanner(os.Stdin)
-	var mainEnv types.MainEnvType = types.MainEnvType{
-		Module: nil,
-		
-	}
 
 	for {
+		moduleName, _ := misc.Colors(fmt.Sprintf("(%s)", mainEnv.Module.Name), "black")
+		if mainEnv.Module.Name != "" {
+			prompt = fmt.Sprintf("%v %v %v ", moduleName, toolName, promptSignal)
+
+		}
+
 		fmt.Print(prompt)
 		ok := stdinScanner.Scan()
 		misc.CtrlDHandler(ok, stdinScanner.Err())
 
 		userInput := strings.Split(strings.TrimSpace(stdinScanner.Text()), " ")
+		rawCmd := userInput[0]
+		if userInput[0] == "" {
+			continue
+		
+		}
 
+		command, okSec := cmd.AvaliableCommands[rawCmd]
+		if !okSec {
+			misc.PanicWarn(fmt.Sprintf("Command %s was not found, use help command to view all avaliable commands\n", rawCmd), true)
+			continue
+
+		}
+
+		command.Run(&mainEnv, userInput)
 
 	}
 }

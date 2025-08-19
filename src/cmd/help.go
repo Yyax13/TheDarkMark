@@ -3,24 +3,24 @@ package cmd
 import (
 	"fmt"
 	"github.com/Yyax13/onTop-C2/src/types"
-
 )
 
 var help types.Command = types.Command{
-	Name: "help",
-	Description: "Shows all avaliable commands",
-	Listable: false,
+	Name:                "help",
+	Description:         "Shows all avaliable commands",
+	Listable:            false,
 	HelpListDescription: "",
-	Run: helpCommand,
-
+	Run:                 helpCommand,
 }
 
 func helpCommand(mainEnv *types.MainEnvType, _ []string) {
 	fmt.Println("Avaliable commands:")
 	for _, cmd := range AvaliableCommands {
-		fmt.Printf("	%-13s: %-16s", cmd.Name, cmd.Description)
+		fmt.Printf("	%-13s: %-16s\n", cmd.Name, cmd.Description)
 
 	}
+
+	fmt.Print("\n")
 
 }
 

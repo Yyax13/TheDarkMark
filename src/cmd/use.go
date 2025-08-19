@@ -21,7 +21,7 @@ var use types.Command = types.Command{
 
 func useCommand(mainEnv *types.MainEnvType, cmdArgs []string) {
 	if len(cmdArgs) < 2 {
-		misc.PanicWarn(fmt.Sprintf("Command correct usage: use <module_name>\n"), true)
+		misc.PanicWarn("Command correct usage: use <module_name>\n", true)
 		return
 
 	}
@@ -34,6 +34,11 @@ func useCommand(mainEnv *types.MainEnvType, cmdArgs []string) {
 
 	}
 
+	mainEnv.Module = targetModule
 
+}
+
+func init() {
+	RegisterNewCommand(&use)
 
 }

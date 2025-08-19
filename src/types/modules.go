@@ -3,15 +3,14 @@ package types
 import (
 	"fmt"
 	"github.com/Yyax13/onTop-C2/src/misc"
-
 )
 
-type Module struct{
-	Name			string
-	Description		string
-	Options 		map[string]*Option
-	Execute			func(opts map[string]*Option, otherParams ...any)
-
+type Module struct {
+	Name        string
+	Description string
+	Options     map[string]*Option
+	Parallel    bool
+	Execute     func(opts map[string]*Option)
 }
 
 func (cmd *Module) ListAvaliableOptions() {
@@ -21,18 +20,20 @@ func (cmd *Module) ListAvaliableOptions() {
 
 	}
 
-	fmt.Printf("Avaliable options for %v\n:", cmd.Name)
-	fmt.Printf("%-10s %-15s %-10s %s\n", "Name", "Current Value", "Required", "Description")
+	fmt.Printf("Avaliable options for %v:\n", cmd.Name)
+	fmt.Printf("	%-10s %-15s %-10s %-15s\n", "Name", "Current Value", "Required", "Description")
 	for _, opt := range cmd.Options {
 		req := "No"
 		if opt.Required {
 			req = "Yes"
 
 		}
-		
-		fmt.Printf("%-10s %-15s %-10s %s\n", opt.Name, opt.Value, req, opt.Description)
+
+		fmt.Printf("	%-10s %-15s %-10s %-15s\n", opt.Name, fmt.Sprintf("%v", opt.Value), req, opt.Description)
 
 	}
+
+	fmt.Print("\n")
 
 }
 
@@ -44,7 +45,7 @@ func (cmd *Module) SetOptionVal(optionName string, OptionVal any) error {
 	}
 
 	opt.Value = OptionVal
-	misc.SysLog(fmt.Sprintf("Successfuly set %s value to %v\n", opt.Name, opt.Value), true)
+	misc.SysLog(fmt.Sprintf("Successfuly set %s value to %v\n\n", opt.Name, opt.Value), false)
 	return nil
 
 }

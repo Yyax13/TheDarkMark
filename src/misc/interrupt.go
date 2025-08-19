@@ -5,15 +5,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
 )
 
 var InterruptSigs chan os.Signal = make(chan os.Signal, 1)
+
 func InitInterruptHandler() {
 	signal.Notify(InterruptSigs, syscall.SIGINT)
 
 	go func() {
-		<- InterruptSigs
+		<-InterruptSigs
 		SysLog("Quiting...\n", true)
 		os.Exit(0)
 
@@ -22,11 +22,14 @@ func InitInterruptHandler() {
 }
 
 var ChanInterruptSigs chan os.Signal = make(chan os.Signal, 1)
+
 func ChanInterruptHandler(channel chan struct{}) {
+	signal.Notify(ChanInterruptSigs, syscall.SIGINT)
+
 	go func() {
-		<- ChanInterruptSigs
+		<-ChanInterruptSigs
 		fmt.Print("\n")
-		channel  <- struct{}{}
+		channel <- struct{}{}
 
 	}()
 
@@ -39,9 +42,9 @@ func CtrlDHandler(o bool, e error) {
 			os.Exit(0)
 
 		}
-		
+
 		os.Exit(1)
-	
+
 	}
 
 }
@@ -53,10 +56,11 @@ func ChanCtrlDHandler(o bool, e error, channel chan struct{}) {
 			channel <- struct{}{}
 
 		}
-		
+
 		PanicWarn(fmt.Sprintf("An error occurred during attacker input: %v", e), true)
 		channel <- struct{}{}
-	
+
 	}
 
 }
+
