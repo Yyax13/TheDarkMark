@@ -127,7 +127,7 @@ func StartListener(opt map[string]*types.Option) {
 	}
 
 	defer listener.Close()
-	misc.SysLog(fmt.Sprintf("Listening in the port %d...\r\n", port), true)
+	misc.SysLog(fmt.Sprintf("Listening in the port %d...\n", port), true)
 
 	ipClientChannel := make(map[string]chan net.Conn)
 	var mu sync.Mutex

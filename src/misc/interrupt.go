@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	
 )
 
 var InterruptSigs chan os.Signal = make(chan os.Signal, 1)
@@ -63,4 +64,3 @@ func ChanCtrlDHandler(o bool, e error, channel chan struct{}) {
 	}
 
 }
-

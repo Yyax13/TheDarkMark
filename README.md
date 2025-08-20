@@ -6,7 +6,7 @@
 <h1 align="center" style="font-size: 45px;">onTop C2</h1>
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-0.1.1B-red)
+![Version](https://img.shields.io/badge/Version-0.1.2B-red)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](/LICENSE)
 
 </div>
@@ -75,12 +75,14 @@ What things you need to install the software and how to install them.
 In the framework, you can use the following commands to interact with the server and clients:
 
 - `use`: Use a specific module.
-- `session`: Uses a specific session (bot) to execute commands.
+- `set`: Set options for the current module.
+- `options`: View and manage options for the current module.
+- `run`: Execute the current module with the specified options.
+- `clear`: Clears the terminal screen and print banner.
+- `exit`: Exits the framework.
 - `list`: Lists anything usable in the framework, such as modules, sessions, and anything other.
 - `helplist`: Displays a list of avaliable commands for listing.
 - `help`: Displays the list of available commands.
-- `clear`: Clears the terminal screen and print banner.
-- `exit`: Exits the framework.
 
 ## 🚀 Deployment <a name = "deployment"></a>
 

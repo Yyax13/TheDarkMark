@@ -1,16 +1,18 @@
 package modules
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+	"io"
 
 	"github.com/Yyax13/onTop-C2/src/misc"
 	"github.com/Yyax13/onTop-C2/src/types"
+
+	"github.com/chzyer/readline"
 )
 
 var session types.Module = types.Module{
@@ -31,7 +33,6 @@ var sessionOptions map[string]*types.Option = map[string]*types.Option{
 }
 
 var interruptChannel chan struct{} = make(chan struct{})
-
 func InteractWithSession(options map[string]*types.Option) {
 	idOption, ok := options["BOT"]
 	if !ok {
@@ -68,12 +69,18 @@ func InteractWithSession(options map[string]*types.Option) {
 	botIP, _ := misc.Colors(session.BotIP, "red")
 	promptSignal, _ := misc.Colors("▶▶", "white_bold")
 	endFromListener := "___END__OF__RESULT__IN__" + session.ID + "__" + session.BotIP + "___"
+	prompt := fmt.Sprintf("%v %v ", botIP, promptSignal)
 	signal.Stop(misc.InterruptSigs)
 	signal.Notify(misc.ChanInterruptSigs, syscall.SIGINT)
 
 	misc.PrintBanner()
 	misc.ChanInterruptHandler(interruptChannel)
-	stdinScanner := bufio.NewScanner(os.Stdin)
+	rl, ee := readline.New(prompt)
+	if ee != nil {
+		fmt.Println("Some error occurred during readline initialization: ", ee)
+		os.Exit(0)
+
+	}
 
 	for {
 		select {
@@ -83,11 +90,13 @@ func InteractWithSession(options map[string]*types.Option) {
 			return
 
 		default:
-			fmt.Printf("%v %v ", botIP, promptSignal)
-			ok := stdinScanner.Scan()
-			misc.ChanCtrlDHandler(ok, stdinScanner.Err(), make(chan struct{}))
+			l, err := rl.Readline()
+			if err == readline.ErrInterrupt || err == io.EOF {
+				return
 
-			userCommand := strings.TrimSpace(stdinScanner.Text())
+			}
+
+			userCommand := strings.TrimSpace(l)
 			if userCommand == "" {
 				continue
 

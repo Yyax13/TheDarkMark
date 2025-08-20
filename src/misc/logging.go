@@ -4,7 +4,7 @@ import "fmt"
 
 func PanicWarn(logContent string, newLine bool) {
 	if newLine {
-		fmt.Println()
+		logContent = "\n" + logContent
 
 	}
 
@@ -15,12 +15,11 @@ func PanicWarn(logContent string, newLine bool) {
 
 func SysLog(logContent string, newLine bool) {
 	if newLine {
-		fmt.Println()
+		logContent = "\n" + logContent
 
 	}
 	
 	logContentColored, _ := Colors(logContent, "green")
-
 	fmt.Printf("%v", logContentColored)
 
 }

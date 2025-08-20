@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## `v0.1.2B` - 2025-08-20
+
+- Increased interactivity of the pseudo shell.
+- Revamped README usage section for new commands.
+
 ## `v0.1.1B` - 2025-08-19
 
 - Improved maintenance and management of modules.

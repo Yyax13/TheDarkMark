@@ -1,20 +1,21 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
+	"io"
 
 	"github.com/Yyax13/onTop-C2/src/cmd"
 	"github.com/Yyax13/onTop-C2/src/misc"
 	"github.com/Yyax13/onTop-C2/src/types"
+
+	"github.com/chzyer/readline"
 )
 
 func main() {
 	var mainEnv types.MainEnvType = types.MainEnvType{
 		Module: &types.Module{},
-		
 	}
 
 	toolName, _ := misc.Colors("onTopC2", "red")
@@ -30,29 +31,46 @@ func main() {
 
 	misc.PrintBanner()
 	misc.InitInterruptHandler()
-	stdinScanner := bufio.NewScanner(os.Stdin)
+	
+	rl, ee := readline.New(prompt)
+	if ee != nil {
+		fmt.Println("Some error occurred during readline initialization: ", ee)
+		os.Exit(0)
+
+	}
+
+	defer func() { _ = rl.Close() }()
 
 	for {
 		moduleName, _ := misc.Colors(fmt.Sprintf("(%s)", mainEnv.Module.Name), "black")
 		if mainEnv.Module.Name != "" {
-			prompt = fmt.Sprintf("%v %v %v ", moduleName, toolName, promptSignal)
+			rl.SetPrompt(fmt.Sprintf("%v %v %v ", moduleName, toolName, promptSignal))
+
+		} else {
+			rl.SetPrompt(prompt)
 
 		}
 
-		fmt.Print(prompt)
-		ok := stdinScanner.Scan()
-		misc.CtrlDHandler(ok, stdinScanner.Err())
-
-		userInput := strings.Split(strings.TrimSpace(stdinScanner.Text()), " ")
-		rawCmd := userInput[0]
-		if userInput[0] == "" {
+		l, err := rl.Readline()
+		switch err {
+		case io.EOF:
+			return
+		
+		case readline.ErrInterrupt:
 			continue
 		
 		}
 
+		userInput := strings.Split(strings.TrimSpace(l), " ")
+		rawCmd := userInput[0]
+		if userInput[0] == "" {
+			continue
+
+		}
+
 		command, okSec := cmd.AvaliableCommands[rawCmd]
 		if !okSec {
-			misc.PanicWarn(fmt.Sprintf("Command %s was not found, use help command to view all avaliable commands\n", rawCmd), true)
+			misc.PanicWarn(fmt.Sprintf("Command %s was not found, use help command to view all avaliable commands\n", rawCmd), false)
 			continue
 
 		}
@@ -60,4 +78,5 @@ func main() {
 		command.Run(&mainEnv, userInput)
 
 	}
+
 }
