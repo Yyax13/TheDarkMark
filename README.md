@@ -1,19 +1,19 @@
 <p align="center">
-  <a href="" rel="noopener">
- <img width=600px height=400px src="assets/banner.png" alt="Project logo"></a>
+  <a href="https://github.com/Yyax13/TheDarkMark.git" rel="noopener">
+ <img width=100% height=100% src="assets/banner.png" alt="Project logo"></a>
 </p>
 
-<h1 align="center" style="font-size: 45px;">onTop C2</h1>
+<h1 align="center" style="font-size: 45px;">The Dark Mark</h1>
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-0.1.2B-red)
+![Version](https://img.shields.io/badge/Version-0.2.0B-darkgreen)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](/LICENSE)
 
 </div>
 
 ---
 
-<p align="center">The onTop C2 is a C2 framework designed for efficient command and control operations in cybersecurity contexts.
+<p align="center">The Dark Mark is a C2 framework designed for efficient command and control operations in cybersecurity contexts.
     <br> 
 </p>
 
@@ -31,17 +31,17 @@
 
 ## 🧐 About <a name = "about"></a>
 
-The onTop C2 framework is designed to provide a comprehensive solution for command and control operations in cybersecurity. It allows users to manage multiple clients, execute commands in real-time, and maintain secure communication channels. The framework is built with scalability and ease of use in mind, making it suitable for both small-scale and large-scale deployments. You can quickly set up a server, connect clients, and start executing commands without extensive configuration. The framework also includes features for monitoring client activity, managing sessions, and ensuring secure data transmission, making it a versatile tool for cybersecurity professionals and researchers alike. Don't be scared to explore its capabilities and customize it to fit your specific needs in command and control operations.
+The Dark Mark framework is designed to provide a comprehensive solution for command and control operations in cybersecurity. It allows users to manage multiple clients, execute commands in real-time, and maintain secure communication channels. The framework is built with scalability and ease of use in mind, making it suitable for both small-scale and large-scale deployments. You can quickly set up a server, connect clients, and start executing commands without extensive configuration. The framework also includes features for monitoring client activity, managing sessions, and ensuring secure data transmission, making it a versatile tool for cybersecurity professionals and researchers alike. Don't be scared to explore its capabilities and customize it to fit your specific needs in command and control operations.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
-Hello user, in this section, we will guide you through the process of setting up the onTop C2 framework on your local machine for development and testing purposes. Follow these steps to get started:
+Hello user, in this section, we will guide you through the process of setting up The Dark Mark framework on your local machine for development and testing purposes. Follow these steps to get started:
 
 Clone our repository and make sure you have the necessary dependencies installed (check the [Prerequisites](#prerequisites)).
 
 ```bash
-git clone https://github.com/Yyax13/onTop-C2.git
-cd onTop-C2
+git clone https://github.com/Yyax13/TheDarkMark.git
+cd TheDarkMark
 ```
 
 And run the make command to build the project:
@@ -59,30 +59,28 @@ What things you need to install the software and how to install them.
 
 - Golang 1.22.2 or higher
 - Make sure you have the necessary permissions to run scripts on your system.
-- Running the framework in a termial with TERM and support for ANSI escape codes is recommended for better output formatting.
+- Running the framework in a terminal with TERM and support for ANSI escape codes is recommended for better output formatting.
+- Chocolatey (for Windows users), we use it to install go if you haven't it - You can install it from [here](https://chocolatey.org/install).
 
 ## 🕵️‍♂️ Spoilers <a name = "spoilers"></a>
 
 ![Main menu](assets/demos/main.png)
-![Connection received](assets/demos/connection_received.png)
-<video width="600" controls>
-    <source src="assets/demos/using.mp4" type="video/mp4">
-    Your .md parser do not support videos using HTML5 embed. Check <a href="assets/demos/using.mp4">here</a>.
-</video>
+![Imperius](assets/demos/imperius.png)
+![Revelio](assets/demos/revelio.png)
 
 ## 🎈 Usage <a name="usage"></a>
 
 In the framework, you can use the following commands to interact with the server and clients:
 
-- `use`: Use a specific module.
-- `set`: Set options for the current module.
-- `options`: View and manage options for the current module.
-- `run`: Execute the current module with the specified options.
-- `clear`: Clears the terminal screen and print banner.
-- `exit`: Exits the framework.
-- `list`: Lists anything usable in the framework, such as modules, sessions, and anything other.
-- `helplist`: Displays a list of avaliable commands for listing.
-- `help`: Displays the list of available commands.
+- `wield`: Use a specific module.
+- `enchant`: Set options for the current module.
+- `runes`: View and manage options for the current module.
+- `cast`: Execute the current module with the specified options.
+- `scourgify`: Clears the terminal screen and print banner.
+- `finite`: Exits the framework.
+- `revelio`: Lists anything usable in the framework, such as modules, sessions, and anything other.
+- `grimorie`: Displays a list of avaliable commands for listing.
+- `pensieve`: Displays the list of available commands.
 
 ## 🚀 Deployment <a name = "deployment"></a>
 
@@ -94,4 +92,4 @@ Stay tuned for updates on deployment options, including cloud-based solutions an
 
 - [@hoWo](https://github.com/Yyax13) - Idea & Initial work
 
-See also the list of [contributors](https://github.com/Yyax13/onTop-C2/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/Yyax13/TheDarkMark/contributors) who participated in this project.

@@ -1,4 +1,4 @@
-package cmd
+package incantations
 
 import (
 	"fmt"
@@ -8,16 +8,16 @@ import (
 
 )
 
-var clear types.Command = types.Command{
-	Name: "clear",
+var scourgify types.Incantation = types.Incantation{
+	Name: "scourgify",
 	Description: "Clear the stdout and print the banner",
-	Listable: false,
-	HelpListDescription: "",
-	Run: clearCommand,
+	RevelioAble: false,
+	GrimorieDescription: "",
+	Cast: scourgifyCommand,
 
 }
 
-func clearCommand(mainEnv *types.MainEnvType, _ []string) {
+func scourgifyCommand(_ *types.GrandHall, _ []string) {
 	e := misc.ForceClearStdout()
 	if e != nil {
 		misc.PanicWarn(fmt.Sprintf("\nAn error ocurred during stdout forced clear: %v", e), true)
@@ -30,6 +30,6 @@ func clearCommand(mainEnv *types.MainEnvType, _ []string) {
 }
 
 func init() {
-	RegisterNewCommand(&clear)
+	RegisterNewIncantation(&scourgify)
 
 }

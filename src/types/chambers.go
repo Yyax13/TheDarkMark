@@ -5,24 +5,24 @@ import (
 	"github.com/Yyax13/onTop-C2/src/misc"
 )
 
-type Module struct {
+type Chamber struct {
 	Name        string
 	Description string
-	Options     map[string]*Option
+	Runes     map[string]*Rune
 	Parallel    bool
-	Execute     func(opts map[string]*Option)
+	Execute     func(runes map[string]*Rune)
 }
 
-func (cmd *Module) ListAvaliableOptions() {
-	if len(cmd.Options) == 0 {
-		misc.PanicWarn(fmt.Sprintf("The command %v haven't options", cmd.Name), false)
+func (chb *Chamber) ListAvaliableRunes() {
+	if len(chb.Runes) == 0 {
+		misc.PanicWarn(fmt.Sprintf("The command %v haven't runes", chb.Name), false)
 		return
 
 	}
 
-	fmt.Printf("Avaliable options for %v:\n", cmd.Name)
+	fmt.Printf("Avaliable runes for %v:\n", chb.Name)
 	fmt.Printf("	%-10s %-15s %-10s %-15s\n", "Name", "Current Value", "Required", "Description")
-	for _, opt := range cmd.Options {
+	for _, opt := range chb.Runes {
 		req := "No"
 		if opt.Required {
 			req = "Yes"
@@ -37,23 +37,23 @@ func (cmd *Module) ListAvaliableOptions() {
 
 }
 
-func (cmd *Module) SetOptionVal(optionName string, OptionVal any) error {
-	opt, exists := cmd.Options[optionName]
+func (chb *Chamber) SetRuneVal(runeName string, RuneVal any) error {
+	opt, exists := chb.Runes[runeName]
 	if !exists {
 		return fmt.Errorf("not found the option %s", opt.Name)
 
 	}
 
-	opt.Value = OptionVal
+	opt.Value = RuneVal
 	misc.SysLog(fmt.Sprintf("Successfuly set %s value to %v\n\n", opt.Name, opt.Value), false)
 	return nil
 
 }
 
-func (cmd *Module) CheckOptionsValue() error {
-	for _, opt := range cmd.Options {
+func (chb *Chamber) CheckRunesValue() error {
+	for _, opt := range chb.Runes {
 		if opt.Required && opt.Value == nil {
-			return fmt.Errorf("option %v is required and not set by user", opt.Name)
+			return fmt.Errorf("rune %v is required and not set by user", opt.Name)
 
 		}
 

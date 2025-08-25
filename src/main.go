@@ -6,7 +6,7 @@ import (
 	"strings"
 	"io"
 
-	"github.com/Yyax13/onTop-C2/src/cmd"
+	"github.com/Yyax13/onTop-C2/src/incantations"
 	"github.com/Yyax13/onTop-C2/src/misc"
 	"github.com/Yyax13/onTop-C2/src/types"
 
@@ -14,17 +14,17 @@ import (
 )
 
 func main() {
-	var mainEnv types.MainEnvType = types.MainEnvType{
-		Module: &types.Module{},
+	var grandHall types.GrandHall = types.GrandHall{
+		Chamber: &types.Chamber{},
 	}
 
-	toolName, _ := misc.Colors("onTopC2", "red")
-	promptSignal, _ := misc.Colors("▶▶", "white_bold")
-	prompt := fmt.Sprintf("%v %v ", toolName, promptSignal)
+	toolName, _ := misc.Colors("Mark", "green")
+	promptSignal, _ := misc.Colors("⌁", "dark_green_bold")
+	prompt := fmt.Sprintf("%v %v %v", toolName, promptSignal, misc.AvaliableColors["white"])
 
 	newErr := misc.ForceClearStdout()
 	if newErr != nil {
-		misc.PanicWarn(fmt.Sprintf("An error ocurred during stdout forced clear: %v", newErr), false)
+		misc.PanicWarn(fmt.Sprintf("An error ocurred during scourgify: %v", newErr), false)
 		os.Exit(0)
 
 	}
@@ -42,9 +42,9 @@ func main() {
 	defer func() { _ = rl.Close() }()
 
 	for {
-		moduleName, _ := misc.Colors(fmt.Sprintf("(%s)", mainEnv.Module.Name), "black")
-		if mainEnv.Module.Name != "" {
-			rl.SetPrompt(fmt.Sprintf("%v %v %v ", moduleName, toolName, promptSignal))
+		chamberName, _ := misc.Colors(fmt.Sprintf("(%s)", grandHall.Chamber.Name), "dark_green_bold")
+		if grandHall.Chamber.Name != "" {
+			rl.SetPrompt(fmt.Sprintf("%v %v %v ", chamberName, toolName, promptSignal))
 
 		} else {
 			rl.SetPrompt(prompt)
@@ -68,14 +68,14 @@ func main() {
 
 		}
 
-		command, okSec := cmd.AvaliableCommands[rawCmd]
+		command, okSec := incantations.AvaliableIncantations[rawCmd]
 		if !okSec {
-			misc.PanicWarn(fmt.Sprintf("Command %s was not found, use help command to view all avaliable commands\n", rawCmd), false)
+			misc.PanicWarn(fmt.Sprintf("Incantation %s was not found, use pensieve incantation to view all avaliable incantations\n\n", rawCmd), false)
 			continue
 
 		}
 
-		command.Run(&mainEnv, userInput)
+		command.Cast(&grandHall, userInput)
 
 	}
 

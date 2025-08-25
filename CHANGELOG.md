@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## `v0.2.0B` - 2025-08-25
+
+- Renamed the project from "onTop" to "The Dark Mark".
+- Refactored codebase for theme consistency.
+- Created a new banner and updated all relevant documentation.
+- Created Fidelius, this is a new feature that is a encoder/decoder for the communication between the client and the server, it can be used in payload encoding and decoding too.
+- Created Rituals, this is a new feature that is the possibility to create custom protocols for the communication between the client and the server.
+
 ## `v0.1.2B` - 2025-08-20
 
 - Increased interactivity of the pseudo shell.

