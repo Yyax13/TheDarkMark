@@ -23,6 +23,6 @@ echo "Installing Go dependencies..."
 go mod tidy
 
 echo "Building for Linux..."
-go build -o -ldflags="-s -w" build/TheDarkMark_linux ./src/main.go
+go build -o -ldflags="-s -w" -o build/TheDarkMark_linux ./src/main.go
 
 echo "Build completed. Executables are in the build/ directory."
