@@ -10,7 +10,7 @@ type basic_bjumpFidelius struct{}
 func (bj basic_bjumpFidelius) Encode(data []byte) ([]byte, error) {
 	result := make([]byte, len(data))
 	for i := range len(data) {
-		result[i] = byte(data[i] + byte(i))
+		result[i] = byte(data[i] + byte(i%256))
 
 	}
 
@@ -21,7 +21,7 @@ func (bj basic_bjumpFidelius) Encode(data []byte) ([]byte, error) {
 func (bj basic_bjumpFidelius) Decode(data []byte) ([]byte, error) {
 	result := make([]byte, len(data))
 	for i := range len(data) {
-		result[i] = byte(data[i] - byte(i))
+		result[i] = byte(data[i] - byte(i%256))
 
 	}
 
