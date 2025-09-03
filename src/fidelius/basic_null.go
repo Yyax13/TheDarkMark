@@ -60,7 +60,16 @@ var Basic_null types.Fidelius = types.Fidelius{
 
 }
 
+func basic_nullCreator() (FideliusCreator) {
+	return func(params map[string]string) (types.FideliusCasting, error) {
+		return &basic_nullFidelius{}, nil
+
+	}
+
+}
+
 func init() {
 	RegisterNewFidelius(&Basic_null)
-	
+	RegisterNewFideliusCreator("basic/null", basic_nullCreator())
+
 }

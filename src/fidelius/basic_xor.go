@@ -54,7 +54,16 @@ var Basic_xor types.Fidelius = types.Fidelius{
 
 }
 
+func basic_xorCreator() (FideliusCreator) {
+	return func(params map[string]string) (types.FideliusCasting, error) {
+		return &basic_xorFidelius{}, nil
+	
+	}
+
+}
+
 func init() {
 	RegisterNewFidelius(&Basic_xor)
+	RegisterNewFideliusCreator("basic/xor", basic_xorCreator())
 
 }

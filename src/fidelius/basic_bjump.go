@@ -35,7 +35,16 @@ var Basic_bjump types.Fidelius = types.Fidelius{
 	Fidelius: basic_bjumpFidelius{},
 }
 
+func basic_bjumpCreator() (FideliusCreator) {
+	return func(params map[string]string) (types.FideliusCasting, error) {
+		return &basic_bjumpFidelius{}, nil
+
+	}
+
+}
+
 func init() {
 	RegisterNewFidelius(&Basic_bjump)
+	RegisterNewFideliusCreator("basic/bjump", basic_bjumpCreator())
 	
 }

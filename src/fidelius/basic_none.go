@@ -24,7 +24,16 @@ var Basic_none types.Fidelius = types.Fidelius{
 
 }
 
+func basic_noneCreator() (FideliusCreator) {
+	return func(params map[string]string) (types.FideliusCasting, error) {
+		return &basic_noneFidelius{}, nil
+
+	}
+
+}
+
 func init() {
 	RegisterNewFidelius(&Basic_none)
+	RegisterNewFideliusCreator("basic/none", basic_noneCreator())
 	
 }
