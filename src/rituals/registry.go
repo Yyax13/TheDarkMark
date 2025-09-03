@@ -7,3 +7,10 @@ func RegisterNewRitual(r *types.Ritual) {
 	AvaliableRituals[r.Name] = r
 	
 }
+
+type RitualCreator func(params map[string]string) (types.RitualInit, error)
+var AvaliableRitualCreators map[string]RitualCreator = make(map[string]RitualCreator)
+func RegisterNewRitualCreator(name string, creator RitualCreator) {
+	AvaliableRitualCreators[name] = creator
+
+}

