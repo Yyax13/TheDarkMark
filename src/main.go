@@ -31,7 +31,7 @@ func main() {
 
 	misc.PrintBanner()
 	misc.InitInterruptHandler()
-	
+
 	rl, ee := readline.New(prompt)
 	if ee != nil {
 		fmt.Println("Some error occurred during readline initialization: ", ee)
@@ -40,7 +40,6 @@ func main() {
 	}
 
 	defer func() { _ = rl.Close() }()
-
 	for {
 		chamberName, _ := misc.Colors(fmt.Sprintf("(%s)", grandHall.Chamber.Name), "dark_green_bold")
 		if grandHall.Chamber.Name != "" {
@@ -55,12 +54,12 @@ func main() {
 		switch err {
 		case io.EOF:
 			return
-		
+
 		case readline.ErrInterrupt:
 			continue
-		
-		}
 
+		}
+		
 		userInput := strings.Split(strings.TrimSpace(l), " ")
 		rawCmd := userInput[0]
 		if userInput[0] == "" {
