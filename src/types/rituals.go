@@ -46,13 +46,13 @@ type Scroll	struct{
 
 type ArcaneLink struct{
 	Network				FlooNetwork
-	ClientScrool		*Scroll
-	Fidelius			Fidelius
+	ClientScroll		*Scroll
+	Fidelius			FideliusCasting
 
 }
 
 func (a *ArcaneLink) Send(data []byte) (error) {
-	encodedData, err := a.Fidelius.Fidelius.Encode(data)
+	encodedData, err := a.Fidelius.Encode(data)
 	if err != nil {
 		return fmt.Errorf("arcanelink: encode failed: %v", err)
 
@@ -69,7 +69,7 @@ func (a *ArcaneLink) Receive() ([]byte, error) {
 
 	}
 
-	decodedData, secErr := a.Fidelius.Fidelius.Decode(received)
+	decodedData, secErr := a.Fidelius.Decode(received)
 	if secErr != nil {
 		return nil, fmt.Errorf("arcanelink: failed in received data decode: %v", err)
 
@@ -89,8 +89,24 @@ func (a *ArcaneLink) IsActive() bool {
 
 }
 
+func (a *ArcaneLink) GetScroll() Scroll {
+	return *a.ClientScroll
+
+}
+
+func (a *ArcaneLink) SetScroll(newScroll *Scroll) error {
+	if newScroll == nil {
+		return fmt.Errorf("can't use a nil scroll as clientscroll")
+		
+	}
+
+	a.ClientScroll = newScroll
+	return nil
+
+}
+
 type RitualInit interface{
-	InitArcane(host, target string, f Fidelius) (*ArcaneLink, error)
+	InitArcane() (*ArcaneLink, error)
 
 }
 
