@@ -13,7 +13,6 @@ import (
 	"unsafe"
 
 	"github.com/Yyax13/onTop-C2/src/fidelius"
-	"github.com/Yyax13/onTop-C2/src/misc"
 	"github.com/Yyax13/onTop-C2/src/types"
 )
 
@@ -35,8 +34,7 @@ func CreateEncoder(fideliusName *C.char, fideliusNameLen C.int, paramsJson *C.ch
 	params := make(map[string]string)
 	if paramsJsonFromC != "" {
 		if err := json.Unmarshal([]byte(paramsJsonFromC), &params); err != nil {
-			misc.PanicWarn(fmt.Sprintf("Invalid JSON parameters for '%s': %v\n\n", fideliusNameFromC, err), false)
-			return 0
+			return 0 // Invalid JSON parameters
 
 		}
 
@@ -44,15 +42,13 @@ func CreateEncoder(fideliusName *C.char, fideliusNameLen C.int, paramsJson *C.ch
 
 	creator, exists := fidelius.AvaliableFideliusCreators[fideliusNameFromC]
 	if !exists {
-		misc.PanicWarn(fmt.Sprintf("Not found the encoder %s\n\n", fideliusNameFromC), false)
-		return 0
+		return 0 // Not found the encoder
 
 	}
 
 	fideliusCasting, err := creator(params)
 	if err != nil {
-		misc.PanicWarn(fmt.Sprintf("Failed to create encoder %s with params %v: %v", fideliusNameFromC, params, err), false)
-		return 0
+		return 0 // Failed to create the encoder with these params
 
 	}
 
@@ -70,28 +66,29 @@ func CreateEncoder(fideliusName *C.char, fideliusNameLen C.int, paramsJson *C.ch
 }
 
 //export DestroyEncoder
-func DestroyEncoder(id C.int) {
+func DestroyEncoder(id C.int) C.int {
 	fideliusMutex.Lock()
 	defer fideliusMutex.Unlock()
 
 	if _, exists := fideliusMap[int(id)]; exists {
 		delete(fideliusMap, int(id))
+		return 1
 
 	} else {
-		misc.SysLog("Attempt to delete a non-existent fidelius\n\n", false)
+		return 0 // Attempt to delete a non-existent fidelius
 
 	}
 	
 }
 
 //export Encode
-func Encode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *C.int) {
+func Encode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *C.int) C.int {
 	fideliusMutex.Lock()
 	fidelius, exists := fideliusMap[int(encoderID)]
 	if !exists {
 		*out = nil
 		*outLen = 0
-		return
+		return 0 // Fidelius was not found
 
 	}
 
@@ -102,16 +99,15 @@ func Encode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *
 	if err != nil {
 		*out = nil
 		*outLen = 0
-		return
+		return 0 // Some error occurred in Encode
 
 	}
 
 	cEncoded := C.malloc(C.size_t(len(encoded)))
 	if cEncoded == nil {
-		misc.SysLog("Failed to allocate memory for encoded data\n\n", false)
 		*out = nil
 		*outLen = 0
-		return
+		return 0 // Failed to allocate memory for encoded data
 
 	}
 
@@ -119,16 +115,18 @@ func Encode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *
 	*out = (*C.char)(cEncoded)
 	*outLen = C.int(len(encoded))
 
+	return 1
+
 }
 
 //export Decode
-func Decode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *C.int) {
+func Decode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *C.int) C.int {
 	fideliusMutex.Lock()
 	fidelius, exists := fideliusMap[int(encoderID)]
 	if !exists {
 		*out = nil
 		*outLen = 0
-		return
+		return 0 // Fidelius not found
 
 	}
 
@@ -139,33 +137,35 @@ func Decode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *
 	if err != nil {
 		*out = nil
 		*outLen = 0
-		return
+		return 0 // Failed to allocate memory for decoded data
 
 	}
 
 	cDecoded := C.malloc(C.size_t(len(decoded)))
 	if cDecoded == nil {
-		misc.SysLog("Failed to allocate memory for decoded data\n\n", false)
 		*out = nil
 		*outLen = 0
-		return
+		return 0 // Some error occurred in mem allocation (aka malloc)
 
 	}
 
 	C.memcpy(cDecoded, unsafe.Pointer(&decoded[0]), C.size_t(len(decoded)))
 	*out = (*C.char)(cDecoded)
 	*outLen = C.int(len(decoded))
+
+	return 1
+
 }
 
 //export FreeGoMem
-func FreeGoMem(pointer *C.char) {
+func FreeGoMem(pointer *C.char) C.int {
 	if pointer == nil {
-		misc.SysLog("Attempt to free a null pointer\n\n", false)
-		return
+		return 0 // Attempt to free a null pointer
 
 	}
 
 	C.free(unsafe.Pointer(pointer))
+	return 1
 
 }
 
