@@ -408,16 +408,4 @@ func SetScroll(arcaneID C.int, cScroll *C.C_Scroll) C.int {
 	
 }
 
-//export FreeGoMem
-func FreeGoMem(pointer *C.char) C.int {
-	if pointer == nil {
-		return 0 // Attempt to free a null pointer
-
-	}
-
-	C.free(unsafe.Pointer(pointer))
-	return 1
-
-}
-
 func main() {}
