@@ -31,7 +31,7 @@ func (bj basic_bjumpFidelius) Decode(data []byte) ([]byte, error) {
 
 var Basic_bjump types.Fidelius = types.Fidelius{
 	Name: "basic/bjump",
-	Description: "Just dynamic jumps bytes", // shit desc, need 2 improve
+	Description: "Just dynamic jumps bytes", // bad desc, need 2 improve
 	Fidelius: basic_bjumpFidelius{},
 }
 

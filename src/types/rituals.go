@@ -51,7 +51,7 @@ type ArcaneLink struct{
 
 }
 
-// need to remove stdout for stealth in spells
+// need to remove stdout for stealth in spells in every method
 func (a *ArcaneLink) Send(data []byte) (error) {
 	encodedData, err := a.Fidelius.Encode(data)
 	if err != nil {

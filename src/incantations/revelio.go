@@ -39,7 +39,7 @@ func revelioIncantation(_ *types.GrandHall, args []string) {
 
 	var revelioType string
 	var revelioContent any
-	switch { // bro i hate switchs but idk other way for doing that
+	switch { // brooo i hate switchs but idk other way for doing that
 	case strings.HasPrefix(inputFromUser, "imperius"), strings.HasPrefix(inputFromUser, "inferi"):
 		revelioType = "Inferis (imperius)"
 		revelioContent = chambers.Inferis

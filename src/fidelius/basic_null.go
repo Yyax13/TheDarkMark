@@ -12,7 +12,7 @@ func (null basic_nullFidelius) Encode(data []byte) ([]byte, error) {
 	for _, b := range data {
 		result = append(result, 0x01)
 		for range int(b) {
-			result = append(result, 0x00) // what if i add random bytes, 3 - 255, should i change the name for basic/brandom
+			result = append(result, 0x00) // what if i add random bytes, 3 - 255, should i change the name for basic/brandom?
 
 		}
 		result = append(result, 0x02)

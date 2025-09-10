@@ -81,7 +81,7 @@ func sessionHandler(sess *MarauderInferi) {
 var ListenerOptions map[string]*types.Rune = map[string]*types.Rune{
 	"PORTKEY": {
 		Name: "PORTKEY",
-		Description: "The port to listen", // need to increase this shit desc
+		Description: "The port to listen", // need to increase this desc
 		Required: true,
 		Value: nil,
 
