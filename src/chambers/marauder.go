@@ -28,7 +28,7 @@ func ipHandler(ip string, channel chan net.Conn) {
 	for conn := range channel {
 		misc.SysLog(fmt.Sprintf("New connection from IP %v", ip), true)
 		newSession := &MarauderInferi{
-			ID: fmt.Sprintf("inferi-%d", rand.Intn(90000) + 10000),
+			ID: fmt.Sprintf("inferi-%d", rand.Intn(90000) + 10000), // I think that i should verify for collisions :3
 			BotIP: ip,
 			Connection: conn,
 			Commands: make(chan string),
@@ -81,7 +81,7 @@ func sessionHandler(sess *MarauderInferi) {
 var ListenerOptions map[string]*types.Rune = map[string]*types.Rune{
 	"PORTKEY": {
 		Name: "PORTKEY",
-		Description: "The port to listen",
+		Description: "The port to listen", // need to increase this shit desc
 		Required: true,
 		Value: nil,
 

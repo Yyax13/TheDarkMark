@@ -14,7 +14,7 @@ func ClearStdout() {
 	
 }
 
-func ForceClearStdout() error {
+func ForceClearStdout() error { // idk why this exists if the ClearStdout do the same thing but don't call LOLBins
 	var clearCommand *exec.Cmd
 
 	switch runtime.GOOS{
@@ -33,7 +33,7 @@ func ForceClearStdout() error {
 
 }
 
-func PrintBanner() {
+func PrintBanner() { // its a nice banner but bigger, i think that we need to add the cols x rows to use the framework in readme
 	rawBanner := `
                                               ''.;o:.',..;:.  ,:. .:c'.....                                                                  
                                                ,kc    .ol.  cd. .od.                             ..   ....                                                    

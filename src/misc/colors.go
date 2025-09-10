@@ -65,7 +65,7 @@ var AvaliableColors map[string]string = map[string]string{
 
 func Colors(text, color string) (string, error) {
 	if _, exists := AvaliableColors[color]; !exists {
-		return "", errors.New("color not avaliable")
+		return "", errors.New("color not avaliable") // idk why this handle exists, just the devs ll use that and i think that they know the avaliable colors
 
 	}
 

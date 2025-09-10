@@ -1,3 +1,4 @@
+// need to change from reverse_tcp for just tcp, reverse is part of spell logic
 package rituals
 
 import (

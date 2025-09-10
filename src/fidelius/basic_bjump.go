@@ -10,7 +10,7 @@ type basic_bjumpFidelius struct{}
 func (bj basic_bjumpFidelius) Encode(data []byte) ([]byte, error) {
 	result := make([]byte, len(data))
 	for i := range len(data) {
-		result[i] = byte(data[i] + byte(i%256))
+		result[i] = byte(data[i] + byte(i%256)) // overflow fallback
 
 	}
 
@@ -31,7 +31,7 @@ func (bj basic_bjumpFidelius) Decode(data []byte) ([]byte, error) {
 
 var Basic_bjump types.Fidelius = types.Fidelius{
 	Name: "basic/bjump",
-	Description: "Just dynamic jumps bytes",
+	Description: "Just dynamic jumps bytes", // shit desc, need 2 improve
 	Fidelius: basic_bjumpFidelius{},
 }
 

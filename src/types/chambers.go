@@ -15,7 +15,7 @@ type Chamber struct {
 
 func (chb *Chamber) ListAvaliableRunes() {
 	if len(chb.Runes) == 0 {
-		misc.PanicWarn(fmt.Sprintf("The command %v haven't runes", chb.Name), false)
+		misc.PanicWarn(fmt.Sprintf("The command %v haven't runes", chb.Name), false) // needs to be "incantation" and not "command"
 		return
 
 	}
@@ -40,7 +40,7 @@ func (chb *Chamber) ListAvaliableRunes() {
 func (chb *Chamber) SetRuneVal(runeName string, RuneVal any) error {
 	opt, exists := chb.Runes[runeName]
 	if !exists {
-		return fmt.Errorf("not found the option %s", opt.Name)
+		return fmt.Errorf("not found the option %s", opt.Name) // todo: change option to rune
 
 	}
 

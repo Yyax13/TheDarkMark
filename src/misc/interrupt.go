@@ -58,7 +58,7 @@ func ChanCtrlDHandler(o bool, e error, channel chan struct{}) {
 
 		}
 
-		PanicWarn(fmt.Sprintf("An error occurred during attacker input: %v", e), true)
+		PanicWarn(fmt.Sprintf("An error occurred during attacker input: %v", e), true) // need to change from attacker to caster or smt like that
 		channel <- struct{}{}
 
 	}

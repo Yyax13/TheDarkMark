@@ -15,7 +15,7 @@ type basic_xorFidelius struct{}
 func (xe basic_xorFidelius) Encode(data []byte) ([]byte, error) {
 	nonce := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return data, fmt.Errorf("some error occurred in basic/xor encode")
+		return data, fmt.Errorf("some error occurred in basic/xor encode") // need 2 change for theme name, fidelius
 
 	}
 
@@ -49,7 +49,7 @@ func (xe basic_xorFidelius) Decode(data []byte) ([]byte, error) {
 
 var Basic_xor types.Fidelius = types.Fidelius{
 	Name: "basic/xor",
-	Description: "Just xor the strings with dynamic key",
+	Description: "Just xor the strings with dynamic key", // nice desc but it can be better if we add " (nonce + len in sha256)" as sufix
 	Fidelius: basic_xorFidelius{},
 
 }

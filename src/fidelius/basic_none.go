@@ -19,7 +19,7 @@ func (none basic_noneFidelius) Decode(data []byte) ([]byte, error) {
 
 var Basic_none types.Fidelius = types.Fidelius{
 	Name: "basic/none",
-	Description: "Don't really encode nothing, just return the original payload",
+	Description: "Don't really encode nothing, just return the original payload", // idk why smn will use that but i have this >:(
 	Fidelius: basic_noneFidelius{},
 
 }

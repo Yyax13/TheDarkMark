@@ -20,7 +20,7 @@ var scourgify types.Incantation = types.Incantation{
 func scourgifyCommand(_ *types.GrandHall, _ []string) {
 	e := misc.ForceClearStdout()
 	if e != nil {
-		misc.PanicWarn(fmt.Sprintf("\nAn error ocurred during stdout forced clear: %v", e), true)
+		misc.PanicWarn(fmt.Sprintf("\nAn error ocurred during stdout forced clear: %v", e), true) // this err msg get out of theme scope
 		os.Exit(0)
 
 	}
