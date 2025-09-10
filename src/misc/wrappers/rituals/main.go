@@ -138,7 +138,7 @@ func InitArcane(ritualID C.int) C.int {
 
 	arcane, err := ritual.InitArcane()
 	if err != nil {
-		return 0 // Failed to init the arcane from ritual with ID
+		return 0 // Failed to init the arcane from ritual
 
 	}
 
@@ -260,7 +260,7 @@ func IsActive(arcaneID C.int) C.int {
 
 	}
 
-	return C.int(0)
+	return C.int(2) // Conn is unavaliable
 
 }
 
