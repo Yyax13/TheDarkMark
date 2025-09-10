@@ -32,7 +32,7 @@ func main() {
 	misc.PrintBanner()
 	misc.InitInterruptHandler()
 
-	rl, ee := readline.New(prompt)
+	rl, ee := readline.New(prompt) // readline broke parallel stdout cause print the prompt every time and parallel can't print the stdout (fr it can, but it's ugly)
 	if ee != nil {
 		fmt.Println("Some error occurred during readline initialization: ", ee)
 		os.Exit(0)
