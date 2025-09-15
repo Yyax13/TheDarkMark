@@ -1,3 +1,5 @@
 .env*
 build/
 docs/ai
+.vscode
+scripts/devutils*
