@@ -36,7 +36,7 @@ type reverse_tcpInit struct{
 
 func (r *reverse_tcpFloo) Send(data []byte) (error) {
 	dataLen := uint64(len(data))
-	dataLenBuf := make([]byte, 4)
+	dataLenBuf := make([]byte, 8)
 	binary.BigEndian.PutUint64(dataLenBuf, dataLen)
 
 	if _, err := r.conn.Write(dataLenBuf); err != nil {
@@ -54,7 +54,7 @@ func (r *reverse_tcpFloo) Send(data []byte) (error) {
 }
 
 func (r *reverse_tcpFloo) Receive() ([]byte, error) {
-	dataLenBuf := make([]byte, 4)
+	dataLenBuf := make([]byte, 8)
 	if _, err := io.ReadFull(r.conn, dataLenBuf); err != nil {
 		return nil, fmt.Errorf("receive: failed to receive data len: %w", err)
 
