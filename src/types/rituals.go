@@ -13,8 +13,7 @@ type FlooNetwork interface{
 
 }
 
-type Scroll	struct{ // i'll have a hard work to implement a func that fetch all that data from OS in spells 
-	ID			string
+type Scroll	struct{ // i'll have a hard work to implement a func that fetch all that data from OS in spells
 	IP			net.IP
 	CPU			struct{
 		Name		string
