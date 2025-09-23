@@ -36,7 +36,6 @@ typedef struct {
 } os_data;
 
 typedef struct {
-	char		ID[C_SMALL_STRING_LEN];
 	char		IP[C_SMALL_STRING_LEN];
 	cpu_data	CPU;
 	os_data		OS;
@@ -271,13 +270,9 @@ func GoScrollToCScroll(goScroll *types.Scroll) *C.C_Scroll {
 
 	}
 
-	cID := C.CString(goScroll.ID)
 	cIP := C.CString(goScroll.IP.String())
-	C.strncpy(&cScroll.ID[0], cID, C.C_SMALL_STRING_LEN - 1)
 	C.strncpy(&cScroll.IP[0], cIP, C.C_SMALL_STRING_LEN)
 	cScroll.IP[C.C_SMALL_STRING_LEN -1] = 0
-	cScroll.ID[C.C_SMALL_STRING_LEN - 1] = 0
-	C.free(unsafe.Pointer(cID))
 	C.free(unsafe.Pointer(cIP))
 
 	cCPUName := C.CString(goScroll.CPU.Name)
@@ -345,7 +340,6 @@ func CScrollToGoScroll(cScroll *C.C_Scroll) *types.Scroll {
 
 	goScroll := &types.Scroll{}
 
-	goScroll.ID = C.GoString(&cScroll.ID[0])
 	goScroll.IP = net.ParseIP(C.GoString(&cScroll.IP[0]))
 
 	goScroll.CPU.Name = C.GoString(&cScroll.CPU.Name[0])
