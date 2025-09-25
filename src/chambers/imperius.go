@@ -28,7 +28,7 @@ var imperiusRuness map[string]*types.Rune = map[string]*types.Rune{
 		Name:        "INFERI",
 		Description: "The target inferi-id to handle interaction",
 		Required:    true,
-		Value:       nil,
+		Value:       "",
 	},
 }
 
@@ -41,8 +41,8 @@ func InteractWithSession(runes map[string]*types.Rune) {
 
 	}
 
-	imperiusID, ok := idRunes.Value.(string)
-	if !ok {
+	imperiusID:= idRunes.Value
+	if idRunes.Value != "" {
 		misc.PanicWarn(fmt.Sprintf("The %v value isn't valid, must be a valid inferi ID str (inferi-00000)\n", idRunes.Name), true)
 		return
 

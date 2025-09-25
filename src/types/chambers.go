@@ -37,7 +37,7 @@ func (chb *Chamber) ListAvaliableRunes() {
 
 }
 
-func (chb *Chamber) SetRuneVal(runeName string, RuneVal any) error {
+func (chb *Chamber) SetRuneVal(runeName string, RuneVal string) error {
 	opt, exists := chb.Runes[runeName]
 	if !exists {
 		return fmt.Errorf("not found the option %s", opt.Name) // todo: change option to rune
@@ -52,7 +52,7 @@ func (chb *Chamber) SetRuneVal(runeName string, RuneVal any) error {
 
 func (chb *Chamber) CheckRunesValue() error {
 	for _, opt := range chb.Runes {
-		if opt.Required && opt.Value == nil {
+		if opt.Required && opt.Value == "" {
 			return fmt.Errorf("rune %v is required and not set by user", opt.Name)
 
 		}

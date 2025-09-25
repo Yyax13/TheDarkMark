@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"strconv"
 	"sync"
 
 	// Internal imports
@@ -83,7 +84,7 @@ var ListenerOptions map[string]*types.Rune = map[string]*types.Rune{
 		Name: "PORTKEY",
 		Description: "The port to listen", // need to increase this desc
 		Required: true,
-		Value: nil,
+		Value: "",
 
 	},
 
@@ -106,7 +107,7 @@ func StartListener(opt map[string]*types.Rune) {
 
 	}
 
-	port, err := misc.AnyToInt(portOption.Value)
+	port, err := strconv.ParseInt(portOption.Value, 10, 8)
 	if err != nil {
 		misc.PanicWarn("The 'PORTKEY' rune value isn't a number\n", true)
 		return

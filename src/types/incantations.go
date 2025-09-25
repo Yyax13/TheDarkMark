@@ -4,7 +4,7 @@ type Rune struct {
 	Name        string
 	Description string
 	Required    bool
-	Value       any
+	Value       string
 }
 
 type Incantation struct {
