@@ -17,6 +17,12 @@ var cast types.Incantation = types.Incantation{
 }
 
 func castIncantation(grandHall *types.GrandHall, args []string) {
+	if grandHall.Chamber.Name == "" {
+		misc.PanicWarn("You aren't in a chamber!\n\n", false)
+		return
+
+	};
+
 	err := grandHall.Chamber.CheckRunesValue()
 	if err != nil {
 		misc.PanicWarn(fmt.Sprintf("%v\n", err.Error()), true)
