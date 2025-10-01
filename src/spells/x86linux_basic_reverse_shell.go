@@ -119,15 +119,16 @@ func init() {
 
 	}
 
+	_payloadDirPath := path.Join(dirname, "x86linux", "basic", "reverse_shell")
 	var x86linux_basic_reverse_shell types.Spell = types.Spell{
 		Name: "x86linux/basic/reverse_shell",
 		Description: "A basic reverse shell without evasion (PoC-like)",
-		PayloadAsoluteDirPath: path.Join(dirname, "x86linux", "basic", "reverse_shell"),
+		PayloadAsoluteDirPath: _payloadDirPath,
 		Methods: x86linux_basic_reverse_shellMethods,
 		InsertCommand: x86linux_basic_reverse_shellInsertCommand,
 		Macros: x86linux_basic_reverse_shellMacros,
 		OutFileExt: "",
-		GccLArgs: []string{"-lm", "-L", "-lfidelius", "-lrituals", "-lutils"},
+		GccLArgs: []string{"-lm", "-lfidelius", "-lrituals", "-lutils"},
 
 	}
 
