@@ -82,7 +82,7 @@ func DestroyEncoder(id C.int) C.int {
 }
 
 //export Encode
-func Encode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *C.int) C.int {
+func Encode(encoderID C.int, data *C.uchar, dataLen C.int, out **C.uchar, outLen *C.int) C.int {
 	fideliusMutex.Lock()
 	fidelius, exists := fideliusMap[int(encoderID)]
 	if !exists {
@@ -112,7 +112,7 @@ func Encode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *
 	}
 
 	C.memcpy(cEncoded, unsafe.Pointer(&encoded[0]), C.size_t(len(encoded)))
-	*out = (*C.char)(cEncoded)
+	*out = (*C.uchar)(cEncoded)
 	*outLen = C.int(len(encoded))
 
 	return 1
@@ -120,7 +120,7 @@ func Encode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *
 }
 
 //export Decode
-func Decode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *C.int) C.int {
+func Decode(encoderID C.int, data *C.uchar, dataLen C.int, out **C.uchar, outLen *C.int) C.int {
 	fideliusMutex.Lock()
 	fidelius, exists := fideliusMap[int(encoderID)]
 	if !exists {
@@ -150,7 +150,7 @@ func Decode(encoderID C.int, data *C.char, dataLen C.int, out **C.char, outLen *
 	}
 
 	C.memcpy(cDecoded, unsafe.Pointer(&decoded[0]), C.size_t(len(decoded)))
-	*out = (*C.char)(cDecoded)
+	*out = (*C.uchar)(cDecoded)
 	*outLen = C.int(len(decoded))
 
 	return 1
