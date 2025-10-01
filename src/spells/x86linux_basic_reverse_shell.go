@@ -1,4 +1,4 @@
-package spell // Other name 'cause i'm afraid of conflicts
+package spells
 
 import (
 	"encoding/binary"
@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/Yyax13/onTop-C2/src/spells"
 	"github.com/Yyax13/onTop-C2/src/types"
 )
 
@@ -123,15 +122,15 @@ func init() {
 	var x86linux_basic_reverse_shell types.Spell = types.Spell{
 		Name: "x86linux/basic/reverse_shell",
 		Description: "A basic reverse shell without evasion (PoC-like)",
-		PayloadAsoluteDirPath: path.Join(dirname, "reverse_shell"),
+		PayloadAsoluteDirPath: path.Join(dirname, "x86linux", "basic", "reverse_shell"),
 		Methods: x86linux_basic_reverse_shellMethods,
 		InsertCommand: x86linux_basic_reverse_shellInsertCommand,
 		Macros: x86linux_basic_reverse_shellMacros,
 		OutFileExt: "",
-		GccLArgs: "-lm -L -lfidelius -lrituals -lutils",
+		GccLArgs: []string{"-lm", "-L", "-lfidelius", "-lrituals", "-lutils"},
 
 	}
 
-	spells.RegisterNewSpell(&x86linux_basic_reverse_shell)
+	RegisterNewSpell(&x86linux_basic_reverse_shell)
 
 }

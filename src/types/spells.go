@@ -25,7 +25,7 @@ type Spell struct{
 	InsertCommand			func(ImplantSideCommand string, originalData []byte) ([]byte, error)
 	Macros					map[string]*SpellMacro
 	OutFileExt				string
-	GccLArgs				string
+	GccLArgs				[]string
 
 }
 
