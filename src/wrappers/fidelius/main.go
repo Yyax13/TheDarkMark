@@ -157,16 +157,4 @@ func Decode(encoderID C.int, data *C.uchar, dataLen C.int, out **C.uchar, outLen
 
 }
 
-//export FreeGoMem
-func FreeGoMem(pointer *C.char) C.int {
-	if pointer == nil {
-		return 0 // Attempt to free a null pointer
-
-	}
-
-	C.free(unsafe.Pointer(pointer))
-	return 1
-
-}
-
 func main() {}

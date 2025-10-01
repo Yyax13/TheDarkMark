@@ -13,6 +13,7 @@ import "C"
 
 import (
 	"encoding/base64"
+	"unsafe"
 
 )
 
@@ -30,6 +31,18 @@ func _b64_d(data *C.char) (C._go_base64) {
 	decoded.len = C.int(len(decodedBytes))
 
 	return decoded
+
+}
+
+//export FreeGoMem
+func FreeGoMem(pointer *C.char) C.int {
+	if pointer == nil {
+		return 0 // Attempt to free a null pointer
+
+	}
+
+	C.free(unsafe.Pointer(pointer))
+	return 1
 
 }
 
