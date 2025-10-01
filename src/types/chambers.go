@@ -2,6 +2,9 @@ package types
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
+
 	"github.com/Yyax13/onTop-C2/src/misc"
 )
 
@@ -21,7 +24,8 @@ func (chb *Chamber) ListAvaliableRunes() {
 	}
 
 	fmt.Printf("Avaliable runes for %v:\n", chb.Name)
-	fmt.Printf("	%-10s %-15s %-10s %-15s\n", "Name", "Current Value", "Required", "Description")
+	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
+	fmt.Fprint(writer, "	\tName \tDescription \tCurrent Value \tRequired\n")
 	for _, opt := range chb.Runes {
 		req := "No"
 		if opt.Required {
@@ -29,10 +33,11 @@ func (chb *Chamber) ListAvaliableRunes() {
 
 		}
 
-		fmt.Printf("	%-10s %-15s %-10s %-15s\n", opt.Name, fmt.Sprintf("%v", opt.Value), req, opt.Description)
+		fmt.Fprintf(writer, "	\t%s \t%s \t%s \t%s\n", opt.Name, fmt.Sprintf("%v", opt.Value), req, opt.Description)
 
 	}
 
+	writer.Flush()
 	fmt.Print("\n")
 
 }
