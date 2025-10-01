@@ -20,8 +20,9 @@
 #include <math.h>
 #include <unistd.h>
 #include <cpuid.h>
-#include "fidelius.h"
-#include "rituals.h"
+#include "libfidelius.h"
+#include "librituals.h"
+// #include "libutils.h"
 #include "macros.h"
 
 // helper defs

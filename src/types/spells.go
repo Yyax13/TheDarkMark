@@ -2,7 +2,7 @@ package types
 
 type SpellMacro struct{
 	Macro 					string
-	Value					any
+	Value					string
 
 }
 
@@ -14,6 +14,9 @@ type SpellMethod struct{
 	ImplantSideCommand		string
 }
 
+/*
+	GccLArgs must be smt like "-lm" for math.h
+*/
 type Spell struct{
 	Name					string
 	Description				string
@@ -21,6 +24,8 @@ type Spell struct{
 	Methods					map[string]*SpellMethod
 	InsertCommand			func(ImplantSideCommand string, originalData []byte) ([]byte, error)
 	Macros					map[string]*SpellMacro
+	OutFileExt				string
+	GccLArgs				string
 
 }
 

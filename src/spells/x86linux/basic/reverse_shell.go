@@ -127,6 +127,8 @@ func init() {
 		Methods: x86linux_basic_reverse_shellMethods,
 		InsertCommand: x86linux_basic_reverse_shellInsertCommand,
 		Macros: x86linux_basic_reverse_shellMacros,
+		OutFileExt: "",
+		GccLArgs: "-lm -L -lfidelius -lrituals -lutils",
 
 	}
 

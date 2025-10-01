@@ -3,3 +3,5 @@ build/
 docs/ai
 .vscode
 scripts/devutils*
+lib*.a
+lib*.h
