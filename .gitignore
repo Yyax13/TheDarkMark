@@ -5,3 +5,4 @@ docs/ai
 scripts/devutils*
 lib*.a
 lib*.h
+.tdm-history

@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strings"
 	"io"
+	"os"
+	"path"
+	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/Yyax13/onTop-C2/src/incantations"
 	"github.com/Yyax13/onTop-C2/src/misc"
@@ -32,7 +35,18 @@ func main() {
 	misc.PrintBanner()
 	misc.InitInterruptHandler()
 
-	rl, ee := readline.New(prompt) // readline broke parallel stdout cause print the prompt every time and parallel can't print the stdout (fr it can, but it's ugly)
+	_, filename, _, _ := runtime.Caller(0)
+	dirname := filepath.Dir(filename)
+	_rlC := readline.Config{
+		Prompt: prompt,
+		HistoryFile: path.Join(dirname, "..", ".tdm-history"),
+		HistoryLimit: 1000,
+		DisableAutoSaveHistory: false,
+		HistorySearchFold: true,
+
+	}
+
+	rl, ee := readline.NewEx(&_rlC) // readline broke parallel stdout cause print the prompt every time and parallel can't print the stdout (fr it can, but it's ugly)
 	if ee != nil {
 		fmt.Println("Some error occurred during readline initialization: ", ee)
 		os.Exit(0)
