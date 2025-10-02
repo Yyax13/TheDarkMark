@@ -13,7 +13,7 @@ endif
 run: ## Run the project without compiling
 	go run ./src
 
-build: ## Compile and sabe execlutable into ./build
+build: ## Compile and save the execlutable into ./build
 ifeq ($(OS),Windows_NT)
 	powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 else
