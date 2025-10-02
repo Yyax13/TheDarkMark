@@ -19,9 +19,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <cpuid.h>
-#include "libfidelius.h"
-#include "librituals.h"
-#include "libutils.h"
+#include "libwrapper.h"
 #include "macros.h"
 
 // helper defs

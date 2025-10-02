@@ -8,6 +8,12 @@ package main
 #define C_BIG_STRING_LEN 128
 
 typedef struct {
+	unsigned char	*data;
+	int				len;
+
+} _go_base64;
+
+typedef struct {
 	char		Name[C_MEDIUM_STRING_LEN];
 	int			Cores;
 	int			Threads;
@@ -41,14 +47,17 @@ typedef struct {
 	os_data		OS;
 
 } C_Scroll;
+
 */
 import "C"
 
 import (
 	"encoding/json"
+	"encoding/base64"
 	"io"
 	"net"
 	"sync"
+	"fmt"
 	"unsafe"
 
 	"github.com/Yyax13/onTop-C2/src/fidelius"
@@ -56,6 +65,38 @@ import (
 	"github.com/Yyax13/onTop-C2/src/types"
 )
 
+//region UTILS
+//export _b64_d
+func _b64_d(data *C.char) (C._go_base64) {
+	goData := C.GoString(data)
+	var decoded C._go_base64;
+	decodedBytes, err := base64.StdEncoding.DecodeString(goData)
+	if err != nil {
+		return decoded
+
+	}
+
+	decoded.data = (*C.uchar)(C.CBytes(decodedBytes))
+	decoded.len = C.int(len(decodedBytes))
+
+	return decoded
+
+}
+
+//export FreeGoMem
+func FreeGoMem(pointer *C.char) C.int {
+	if pointer == nil {
+		return 0 // Attempt to free a null pointer
+
+	}
+
+	C.free(unsafe.Pointer(pointer))
+	return 1
+
+}
+//endregion
+
+//region RITUALS
 var (
 	ritualsMap =		make(map[int]types.RitualInit)
 	arcanesMap =		make(map[int]*types.ArcaneLink)
@@ -401,5 +442,148 @@ func SetScroll(arcaneID C.int, cScroll *C.C_Scroll) C.int {
 	return C.int(1)
 	
 }
+//endregion
+//region FIDELIUS
+var (
+	fideliusMap = 		make(map[int]*types.Fidelius)
+	fideliusIDCounter 	int
+	fideliusMutex		sync.Mutex
+
+)
+
+//export CreateEncoder
+func CreateEncoder(fideliusName *C.char, fideliusNameLen C.int, paramsJson *C.char, paramsJsonLen C.int) C.int {
+	fideliusMutex.Lock()
+	defer fideliusMutex.Unlock()
+
+	fideliusNameFromC := C.GoStringN(fideliusName, fideliusNameLen)
+	paramsJsonFromC := C.GoStringN(paramsJson, paramsJsonLen)
+
+	params := make(map[string]string)
+	if paramsJsonFromC != "" {
+		if err := json.Unmarshal([]byte(paramsJsonFromC), &params); err != nil {
+			return 0 // Invalid JSON parameters
+
+		}
+
+	}
+
+	creator, exists := fidelius.AvaliableFideliusCreators[fideliusNameFromC]
+	if !exists {
+		return 0 // Not found the encoder
+
+	}
+
+	fideliusCasting, err := creator(params)
+	if err != nil {
+		return 0 // Failed to create the encoder with these params
+
+	}
+
+	fideliusIDCounter++
+	id := fideliusIDCounter
+	fideliusMap[id] = &types.Fidelius{
+		Name: fideliusNameFromC,
+		Description: fmt.Sprintf("Wrapper for %s fidelius", fideliusNameFromC),
+		Fidelius: fideliusCasting,
+
+	}
+
+	return C.int(id)
+
+}
+
+//export DestroyEncoder
+func DestroyEncoder(id C.int) C.int {
+	fideliusMutex.Lock()
+	defer fideliusMutex.Unlock()
+
+	if _, exists := fideliusMap[int(id)]; exists {
+		delete(fideliusMap, int(id))
+		return 1
+
+	} else {
+		return 0 // Attempt to delete a non-existent fidelius
+
+	}
+	
+}
+
+//export Encode
+func Encode(encoderID C.int, data *C.uchar, dataLen C.int, out **C.uchar, outLen *C.int) C.int {
+	fideliusMutex.Lock()
+	fidelius, exists := fideliusMap[int(encoderID)]
+	if !exists {
+		*out = nil
+		*outLen = 0
+		return 0 // Fidelius was not found
+
+	}
+
+	fideliusMutex.Unlock()
+
+	dataFromC := C.GoBytes(unsafe.Pointer(data), dataLen)
+	encoded, err := fidelius.Fidelius.Encode(dataFromC)
+	if err != nil {
+		*out = nil
+		*outLen = 0
+		return 0 // Some error occurred in Encode
+
+	}
+
+	cEncoded := C.malloc(C.size_t(len(encoded)))
+	if cEncoded == nil {
+		*out = nil
+		*outLen = 0
+		return 0 // Failed to allocate memory for encoded data
+
+	}
+
+	C.memcpy(cEncoded, unsafe.Pointer(&encoded[0]), C.size_t(len(encoded)))
+	*out = (*C.uchar)(cEncoded)
+	*outLen = C.int(len(encoded))
+
+	return 1
+
+}
+
+//export Decode
+func Decode(encoderID C.int, data *C.uchar, dataLen C.int, out **C.uchar, outLen *C.int) C.int {
+	fideliusMutex.Lock()
+	fidelius, exists := fideliusMap[int(encoderID)]
+	if !exists {
+		*out = nil
+		*outLen = 0
+		return 0 // Fidelius not found
+
+	}
+
+	fideliusMutex.Unlock()
+
+	dataFromC := C.GoBytes(unsafe.Pointer(data), dataLen)
+	decoded, err := fidelius.Fidelius.Decode(dataFromC)
+	if err != nil {
+		*out = nil
+		*outLen = 0
+		return 0 // Failed to allocate memory for decoded data
+
+	}
+
+	cDecoded := C.malloc(C.size_t(len(decoded)))
+	if cDecoded == nil {
+		*out = nil
+		*outLen = 0
+		return 0 // Some error occurred in mem allocation (aka malloc)
+
+	}
+
+	C.memcpy(cDecoded, unsafe.Pointer(&decoded[0]), C.size_t(len(decoded)))
+	*out = (*C.uchar)(cDecoded)
+	*outLen = C.int(len(decoded))
+
+	return 1
+
+}
+//endregion
 
 func main() {}
