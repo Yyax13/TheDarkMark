@@ -52,12 +52,12 @@ typedef struct {
 import "C"
 
 import (
-	"encoding/json"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"sync"
-	"fmt"
 	"unsafe"
 
 	"github.com/Yyax13/onTop-C2/src/fidelius"
@@ -140,7 +140,7 @@ func CreateProtocol(ritualName *C.char, ritualNameLen C.int, paramsJson *C.char,
 
 	ritual, err := creator(params)
 	if err != nil {
-		return 0 // Failed to create the ritual with params
+		return 9494 // Failed to create the ritual with params
 
 	}
 
