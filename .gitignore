@@ -6,3 +6,4 @@ scripts/devutils*
 lib*.a
 lib*.h
 .tdm-history
+_tmp
