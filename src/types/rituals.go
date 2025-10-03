@@ -110,10 +110,16 @@ type RitualInit interface{
 
 }
 
+type RitualListener interface{
+	InitListener() (*ArcaneLink, error)
+
+}
+
 type Ritual struct{
 	Name	 			string
 	Description 		string
-	Init				RitualInit
-	Fidelius			Fidelius
+	Connect				RitualInit
+	Listener			RitualListener
+	Encoder				Fidelius
 
 }

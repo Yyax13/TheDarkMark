@@ -15,8 +15,15 @@ import (
 var tcp types.Ritual = types.Ritual{
 	Name: "tcp",
 	Description: "Create a TCP ritual",
-	Fidelius: fidelius.Basic_bjump,
-	Init: tcpInit{},
+	Encoder: fidelius.Basic_bjump,
+	Connect: tcpConnect{},
+	Listener: tcpListen{},
+
+}
+
+type tcpListen struct{
+	lport		int
+	fidelius	types.FideliusCasting
 
 }
 
@@ -25,7 +32,7 @@ type tcpFloo struct{
 
 }
 
-type tcpInit struct{
+type tcpConnect struct{
 	lhost		string
 	lport		int
 	fidelius	types.FideliusCasting
@@ -83,7 +90,7 @@ func (r *tcpFloo) IsActive() (bool) {
 
 }
 
-func (t tcpInit) InitArcane() (*types.ArcaneLink, error) {
+func (t tcpConnect) InitArcane() (*types.ArcaneLink, error) {
 	host := t.lhost
 	port := t.lport
 	connString := net.JoinHostPort(host, strconv.Itoa(port))
@@ -111,25 +118,55 @@ func (t tcpInit) InitArcane() (*types.ArcaneLink, error) {
 
 }
 
+func (t tcpListen) InitListener() (*types.ArcaneLink, error) {
+	port := t.lport
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return &types.ArcaneLink{}, err
+		
+	}
+
+	conn, err := listener.Accept()
+	if err != nil {
+		return &types.ArcaneLink{}, err
+
+	}
+
+	return &types.ArcaneLink{
+		Network: &tcpFloo{
+			conn: conn,
+
+		},
+		ClientScroll: &types.Scroll{},
+		Fidelius: t.fidelius,
+
+	}, nil
+
+}
+
 func tcpCreator() (RitualCreator) {
-	return func(params map[string]string) (types.RitualInit, error) {
+	return func(params map[string]string) (types.RitualInit, types.RitualListener, error) {
 		port, err := strconv.ParseInt(params["LPORT"], 10, 16)
 		if err != nil {
-			return nil, fmt.Errorf("failed to use LPORT param as ritual lport: %w", err)
+			return nil, nil, fmt.Errorf("failed to use LPORT param as ritual lport: %w", err)
 
 		}
 
 		fideliusCast, exists := fidelius.AvaliableFidelius[params["FIDELIUS"]]
 		if !exists {
-			return nil, fmt.Errorf("specified fidelius %s do not exists", params["FIDELIUS"])
+			return nil, nil, fmt.Errorf("specified fidelius %s do not exists", params["FIDELIUS"])
 
 		}
 
-		return tcpInit{
+		return tcpConnect{
 			lhost: params["LHOST"],
 			lport: int(port),
 			fidelius: fideliusCast.Fidelius,
 			
+		}, tcpListen{
+			lport: int(port),
+			fidelius: fideliusCast.Fidelius,
+
 		}, nil
 
 	}

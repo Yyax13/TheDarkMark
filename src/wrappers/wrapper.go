@@ -138,7 +138,7 @@ func CreateProtocol(ritualName *C.char, ritualNameLen C.int, paramsJson *C.char,
 	
 	}
 
-	ritual, err := creator(params)
+	ritual, _, err := creator(params)
 	if err != nil {
 		return 9494 // Failed to create the ritual with params
 
