@@ -1,6 +1,6 @@
 module github.com/Yyax13/onTop-C2
 
-go 1.22.2
+go 1.25.1
 
 require github.com/chzyer/readline v1.5.1
 
