@@ -1,6 +1,4 @@
-- [ ] Add module to create executables with custom payloads.
 - [ ] Create linux and windows/basic/reverse_shell spell.
-- [ ] Update the marauder and imperius chambers to use the new protocols and fidelius.
 - [ ] Create GUI.
 - [ ] Create deployment guide to set up the framework on a server.
 - [ ] Populate the framework with more spells.
@@ -10,3 +8,5 @@
 - [X] Change all demos in README.md to show the new frontend.
 - [X] Add session persistence to save sessions between restarts.
 > Partially done, sessions can be saved with ctrl+Z and restored with bg command.
+- [X] Add module to create executables with custom payloads.
+- [X] Update the marauder and imperius chambers to use the new protocols and fidelius.
