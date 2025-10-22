@@ -94,15 +94,9 @@ func (t tcpConnect) InitArcane() (*types.ArcaneLink, error) {
 	host := t.lhost
 	port := t.lport
 	connString := net.JoinHostPort(host, strconv.Itoa(port))
-	_, tryToReach := net.Dial("tcp", connString)
-	if tryToReach != nil {
-		return &types.ArcaneLink{}, fmt.Errorf("can't reach host %s, check it and try again", host)
-	
-	}
-	
 	connection, err := net.Dial("tcp", connString)
 	if err != nil {
-		return &types.ArcaneLink{}, err
+		return &types.ArcaneLink{}, fmt.Errorf("%w\n\nand can't reach host %s, check it and try again", err, host)
 
 	}
 
@@ -126,18 +120,31 @@ func (t tcpListen) InitListener() (*types.ArcaneLink, error) {
 		
 	}
 
+	defer listener.Close()
+
 	conn, err := listener.Accept()
 	if err != nil {
 		return &types.ArcaneLink{}, err
 
 	}
 
+	host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	if err != nil {
+		return nil, err
+
+	}
+
+
+
 	return &types.ArcaneLink{
 		Network: &tcpFloo{
 			conn: conn,
 
 		},
-		ClientScroll: &types.Scroll{},
+		ClientScroll: &types.Scroll{
+			IP: net.ParseIP(host),
+			
+		},
 		Fidelius: t.fidelius,
 
 	}, nil
