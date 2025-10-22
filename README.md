@@ -6,7 +6,7 @@
 <h1 align="center" style="font-size: 45px;">The Dark Mark</h1>
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-0.2.0B-darkgreen)
+![Version](https://img.shields.io/badge/Version-0.3.0B-darkgreen)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](/LICENSE)
 
 </div>
@@ -57,7 +57,7 @@ If you use windows, the executable can be triggered by some AVs, but it is norma
 
 What things you need to install the software and how to install them.
 
-- Golang 1.22.2 or higher
+- Golang 1.25.1 or higher
 - Make sure you have the necessary permissions to run scripts on your system.
 - Running the framework in a terminal with TERM and support for ANSI escape codes is recommended for better output formatting.
 - Chocolatey (for Windows users), we use it to install go if you haven't it - You can install it from [here](https://chocolatey.org/install).

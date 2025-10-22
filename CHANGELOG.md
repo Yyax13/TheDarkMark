@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## `v0.3.0B` - 2025-10-22
+
+-   **Features:**
+    *   Introduced a new Malfoy chamber for runtime spell generation with custom parameters.
+    *   Enhanced connection and command handling, including fixes for multiple connections, improved bot data formatting, and robust argument parsing.
+    *   Added spell listing functionality and refactored for new "marauder" integration.
+    *   Implemented debug printing and `SPrintScroll` function.
+
+-   **Bug Fixes:**
+    *   Corrected argument order for rune listing.
+    *   Fixed incorrect base/size issues in `ParseInt`.
+    *   Resolved several breaking issues in `main.c`.
+    *   Addressed a typo in the build description.
+
+-   **Refactorings:**
+    *   Optimized TCP ritual for efficiency and compatibility with new "marauder/imperius" components.
+    *   Updated "imperius" and "marauder" for better compatibility and new connection handling.
+    *   Revised Ritual structure to support Listener and Connect types, improving overall functionality.
+    *   Consolidated wrapper libraries (e.g., `-lfidelius/rituals/utils` to `-lwrapper`).
+
+-   **Documentation:**
+    *   Updated TODO list.
+    *   Improved clarity of existing comments.
+
+-   **Chores:**
+    *   Upgraded Go to version 1.25.1.
+    *   Added `_tmp` to `.gitignore`.
+
+-   **Style:**
+    *   Applied consistent indentation in `copy.go`.
+
 ## `v0.2.0B` - 2025-08-25
 
 - Renamed the project from "onTop" to "The Dark Mark".
