@@ -10,6 +10,7 @@ import (
 	"github.com/Yyax13/onTop-C2/src/fidelius"
 	"github.com/Yyax13/onTop-C2/src/misc"
 	"github.com/Yyax13/onTop-C2/src/rituals"
+	"github.com/Yyax13/onTop-C2/src/spells"
 	"github.com/Yyax13/onTop-C2/src/types"
 )
 
@@ -31,7 +32,12 @@ func revelioIncantation(_ *types.GrandHall, args []string) {
 	incantationRunes := args[1]
 	inputFromUser := strings.TrimSpace(strings.ToLower(incantationRunes))
 	targetIncantation, ok := AvaliableIncantations[strings.TrimSpace(incantationRunes)]
-	if !ok && !(strings.HasPrefix(inputFromUser, "imperius") || strings.HasPrefix(inputFromUser, "inferi") || strings.HasPrefix(inputFromUser, "fidelius") || strings.HasPrefix(inputFromUser, "ritual")) {
+	if !ok && !(
+			strings.HasPrefix(inputFromUser, "imperius") 	|| 
+			strings.HasPrefix(inputFromUser, "inferi") 		|| 
+			strings.HasPrefix(inputFromUser, "fidelius") 	|| 
+			strings.HasPrefix(inputFromUser, "ritual")		||
+			strings.HasPrefix(inputFromUser, "spell")) {
 		misc.PanicWarn(fmt.Sprintf("Incantation %v not found\n\n", incantationRunes), false)
 		return
 
@@ -45,16 +51,20 @@ func revelioIncantation(_ *types.GrandHall, args []string) {
 		revelioContent = chambers.Inferis
 
 	case strings.HasPrefix(inputFromUser, "wield"):
-		revelioType = "chambers"
+		revelioType = "Chambers"
 		revelioContent = chambers.AvaliableModules
 
 	case strings.HasPrefix(inputFromUser, "fidelius"):
-		revelioType = "fidelius"
+		revelioType = "Fidelius"
 		revelioContent = fidelius.AvaliableFidelius
 
 	case strings.HasPrefix(inputFromUser, "ritual"):
-		revelioType = "rituals"
+		revelioType = "Rituals"
 		revelioContent = rituals.AvaliableRituals
+	
+	case strings.HasPrefix(inputFromUser, "spell"):
+		revelioType = "Spells"
+		revelioContent = spells.AvaliableSpells
 
 	default:
 		misc.PanicWarn(fmt.Sprintf("The incantation %v isn't revelio able\n\n", targetIncantation), false)
@@ -71,7 +81,7 @@ func revelioIncantation(_ *types.GrandHall, args []string) {
 
 		}
 
-	case map[string]*chambers.MarauderInferi:
+	case map[string]*chambers.Inferi:
 		fmt.Fprintf(writer, "	\t%s\t%s\n", "INFERI ID", "IP")
 		for _, v := range t {
 			fmt.Fprintf(writer, "	\t%s\t%s\n", v.ID, v.BotIP)
@@ -88,12 +98,19 @@ func revelioIncantation(_ *types.GrandHall, args []string) {
 	case map[string]*types.Ritual:
 		fmt.Fprintln(writer, "	\tName\tDescription\tDefault Fidelius")
 		for _, v := range t {
-			fmt.Fprintf(writer, "	\t%s\t%s\t%s\n", v.Name, v.Description, v.Fidelius.Name)
+			fmt.Fprintf(writer, "	\t%s\t%s\t%s\n", v.Name, v.Description, v.Encoder.Name)
 			
+		}
+	
+	case map[string]*types.Spell:
+		fmt.Fprintf(writer, "	\tName\tDescription\n")
+		for _, v := range t {
+			fmt.Fprintf(writer, "	\t%s\t%s\n", v.Name, v.Description)
+
 		}
 
 	default:
-		misc.PanicWarn(fmt.Sprintf("The type %s isn't supported for Revelio, contact the witch\n\n", t), false)
+		misc.PanicWarn(fmt.Sprintf("The type %s isn't supported for Revelio, contact the witch (open a issue)\n\n", t), false)
 		return
 
 	}
