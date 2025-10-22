@@ -227,6 +227,7 @@ func Receive(arcaneID C.int, output **C.char, outputLen *C.int) C.int {
 	arcaneMutex.Unlock()
 
 	data, err := arcane.Receive()
+	// fmt.Printf("Data raw: % 02x\nData: %s\n", data, string(data)) // debug
 	if err != nil {
 		*output = nil
 		*outputLen = C.int(0)
@@ -442,6 +443,48 @@ func SetScroll(arcaneID C.int, cScroll *C.C_Scroll) C.int {
 	return C.int(1)
 	
 }
+
+//export SPrintScroll
+func SPrintScroll(scroll C.C_Scroll, output **C.char) C.int {
+	goScroll := CScrollToGoScroll(&scroll)
+	format := `CPU:
+	Name:     %s
+	Cores:    %d
+	Threads:  %d
+	Arch:     %s
+	Clock:    %dMhz
+	Cache:    %dB
+
+OS:
+	Name:     %s
+	Version:  %s
+	Arch:     %s
+	Hostname: %s
+	Username: %s
+	Domain:   %s
+	Uptime:   %ds
+	AVs:
+		Name:   %s
+		Active: %s`
+
+	out := fmt.Sprintf(format, goScroll.CPU.Name, goScroll.CPU.Cores, goScroll.CPU.Threads, goScroll.CPU.Arch, goScroll.CPU.Clock, goScroll.CPU.Cache, goScroll.OS.Name, goScroll.OS.Version, goScroll.OS.Arch, goScroll.OS.Hostname, goScroll.OS.Username, goScroll.OS.Domain, goScroll.OS.Uptime, goScroll.OS.AV.Name, map[bool]string{true: "Yes", false: "No"}[goScroll.OS.AV.Active])
+
+	outBytes := []byte(out)
+
+	cData := C.malloc(C.size_t(len(outBytes) + 1))
+	if cData == nil {
+		*output = nil
+		return C.int(-1) // malloc failed
+
+	}
+
+	C.memcpy(cData, unsafe.Pointer(&outBytes[0]), C.size_t(len(outBytes)))
+
+	*output = (*C.char)(cData) 
+	return C.int(len(outBytes))
+
+}
+
 //endregion
 //region FIDELIUS
 var (
