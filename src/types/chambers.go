@@ -33,7 +33,7 @@ func (chb *Chamber) ListAvaliableRunes() {
 
 		}
 
-		fmt.Fprintf(writer, "	\t%s \t%s \t%s \t%s\n", opt.Name, fmt.Sprintf("%v", opt.Value), req, opt.Description)
+		fmt.Fprintf(writer, "	\t%s \t%s \t%s \t%s\n", opt.Name, opt.Description, fmt.Sprintf("%v", opt.Value), req)
 
 	}
 
