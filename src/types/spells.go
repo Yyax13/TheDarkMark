@@ -15,7 +15,7 @@ type SpellMethod struct{
 }
 
 /*
-	GccLArgs must be smt like "-lm" for math.h
+	GccLArgs must be smt like "-lm" for math.h or -lwrapper123xyz
 */
 type Spell struct{
 	Name					string
