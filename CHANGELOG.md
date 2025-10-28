@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## `v0.3.1B` - 2025-10-28
+
+Fixed some memory handling bugs in basic rituals.
+Created new spell: `x86linux/evasion/reverse_shell`: the same thing than basic/reverse_shell but with evasion techniques to avoid detection by antivirus, avoid execution in sandboxes and avoid debugging.
+
 ## `v0.3.0B` - 2025-10-22
 
 -   **Features:**

@@ -6,7 +6,7 @@
 <h1 align="center" style="font-size: 45px;">The Dark Mark</h1>
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-0.3.0B-darkgreen)
+![Version](https://img.shields.io/badge/Version-0.3.1B-darkgreen)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](/LICENSE)
 
 </div>
