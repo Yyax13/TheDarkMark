@@ -79,6 +79,7 @@ func ipHandler(ip string, channeel chan *types.ArcaneLink, spell types.Spell, ti
 	inferiMu.Unlock()
 
 	for conn := range channeel {
+		misc.SysLog(fmt.Sprintf("Reconnected %s", ip), true);
 		disablePrint := os.Getenv("disableErrorPrintsFromMarauder") == "ye"
 		if !disablePrint {
 			misc.SysLog(fmt.Sprintf("New connection from IP %s (inferi %s)\n\n", ip, inferi.ID), true)
@@ -242,7 +243,7 @@ func StartListener(opt map[string]*types.Rune) {
 
 	}
 
-	port, err := strconv.ParseInt(portOpt.Value, 10, 16)
+	port, err := strconv.ParseInt(portOpt.Value, 10, 32)
 	if err != nil {
 		misc.PanicWarn("The 'LPORT' rune value isn't a number\n", true)
 		return

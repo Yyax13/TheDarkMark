@@ -153,7 +153,7 @@ func (t tcpListen) InitListener() (*types.ArcaneLink, error) {
 
 func tcpCreator() (RitualCreator) {
 	return func(params map[string]string) (types.RitualInit, types.RitualListener, error) {
-		port, err := strconv.ParseInt(params["LPORT"], 10, 16)
+		port, err := strconv.ParseInt(params["LPORT"], 10, 32)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to use LPORT param as ritual lport: %w", err)
 
