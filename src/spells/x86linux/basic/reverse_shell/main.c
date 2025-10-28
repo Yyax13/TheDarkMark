@@ -24,8 +24,6 @@
 
 // helper defs
 char* parseExecOutput(int pipeInt);
-char** mergeStrArrays(char *array1[], int array1Len, char *array2[], int array2Len);
-char** splitStr(char *str, char delim, int *count);
 char* decodeMacro(char *macroEncoded, int *payloadEncoderID);
 int parseInt(char *string, int fallback);
 
@@ -707,62 +705,6 @@ char* decodeMacro(char* macroEncoded, int *payloadEncoderID) {
     }
 
     return (char*)_decodedMacro;
-
-};
-
-char** splitStr(char *str, char delim, int *count) {
-    char **newStr = NULL;
-    int tokens = 0;
-    const char *start = str;
-    const char *p = str;
-
-    while (*p) {
-        if (*p == delim) {
-            int partlen = p - start;
-            char *token = (char*)malloc(partlen + 1); // needs to be free by caller
-            memcpy(token, start, partlen);
-            token[partlen] = '\0';
-
-            newStr = (char**)realloc(newStr, sizeof(char*) * (tokens + 1));
-            newStr[tokens++] = token;
-            start = p + 1;
-
-        }
-
-        p++;
-
-    }
-
-    if (start != p) { // note: this is for the last token :3. I think that we can do that in while but this implementation already looks good :D
-        int partlen = p - start;
-        char *token = (char*)malloc(partlen + 1); // same thing
-        memcpy(token, start, partlen);
-        token[partlen] = '\0';
-
-        newStr = (char**)realloc(newStr, sizeof(char*) * (tokens + 1));
-        newStr[tokens++] = token;
-
-    }
-
-    *count = tokens;
-    return newStr;
-
-};
-
-char** mergeStrArrays(char *array1[], int array1Len, char *array2[], int array2Len) {
-    int newArrayLen = array1Len + array2Len;
-    char **newArray = malloc((newArrayLen + 1) * sizeof(char*));
-    if (newArray == NULL) {
-        return NULL;
-
-    }
-
-    memcpy(newArray, array1, array1Len * sizeof(char*));
-    memcpy(newArray + array1Len, array2, array2Len * sizeof(char*));
-
-    newArray[newArrayLen] = '\0';
-
-    return newArray;
     
 };
 
