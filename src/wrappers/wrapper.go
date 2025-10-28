@@ -94,6 +94,25 @@ func FreeGoMem(pointer *C.char) C.int {
 	return 1
 
 }
+
+//export PrintBytes
+func PrintBytes(data *C.char, dataLen C.int) {
+	goData := C.GoBytes(unsafe.Pointer(data), dataLen)
+	fmt.Printf("<Bytes % 02x", goData[0])
+	for _, b := range goData {
+		if b == goData[0] {
+			continue
+
+		}
+
+		fmt.Printf(", % 02x", b);
+
+	}
+
+	fmt.Print(">\n")
+	
+}
+
 //endregion
 
 //region RITUALS
