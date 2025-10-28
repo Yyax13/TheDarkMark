@@ -612,6 +612,7 @@ func Decode(encoderID C.int, data *C.uchar, dataLen C.int, out **C.uchar, outLen
 
 	}
 
+	decoded = append(decoded, []byte{0x00}...)
 	cDecoded := C.malloc(C.size_t(len(decoded)))
 	if cDecoded == nil {
 		*out = nil
