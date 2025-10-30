@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## `v0.3.2B` - 2025-10-30
+
+-  **Bug Fixes:**
+    * Fixed incorrect path joining in `x86linux/evasion/reverse_shell` spell.
+
 ## `v0.3.1B` - 2025-10-28
 
 Fixed some memory handling bugs in basic rituals.
