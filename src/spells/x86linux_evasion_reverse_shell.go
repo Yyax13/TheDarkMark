@@ -177,7 +177,7 @@ func init() {
 		},
 		"PROC_SELF_CGROUP": {
 			Macro: "PROC_SELF_CGROUP",
-			Value: "/proc/self/cgroup",
+			Value: "/proc/self/cgroups",
 
 		},
 
