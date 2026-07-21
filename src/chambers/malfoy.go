@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+    "strings"
 
 	"github.com/Yyax13/onTop-C2/src/fidelius"
 	"github.com/Yyax13/onTop-C2/src/misc"
@@ -179,32 +180,59 @@ func malfoyExecute(runes map[string]*types.Rune) {
 	gccArgs = append(gccArgs, fmt.Sprintf("-L%s", _tmpDir))
 	gccArgs = append(gccArgs, spell.GccLArgs...)
 
-	for runeName, runeVal := range runes {
-		if runeVal.Name == "PAYLOAD_ENCODER_NAME" || runeVal.Name == "PAYLOAD_ENCODER_KEY" {
-			gccArgs = append(gccArgs, fmt.Sprintf("-D%s=\"%s\"", runeVal.Name, runeVal.Value))
-			continue // Don't encode
+    misc.SysLog("Starting macros/runes inserting", true)
+    var b strings.Builder
+    b.WriteString("#pragma once\n\n")
 
-		}
+    for runeName, runeVal := range runes {
+        if runeVal.Value == "" || runeName == "SPELL" {
+            continue
+        }
 
-		if runeVal.Value != "" && runeName != "SPELL" {
-			rawRuneValEncoded, _ := spellFidelius.Fidelius.Encode([]byte(runeVal.Value))
-			runeValEncodedBase64 := base64.StdEncoding.EncodeToString(rawRuneValEncoded)
-			gccArgs = append(gccArgs, fmt.Sprintf("-D%s=\"%s\"", runeVal.Name, runeValEncodedBase64))
+        value := runeVal.Value
 
-		}
+        if runeVal.Name != "PAYLOAD_ENCODER_NAME" &&
+           runeVal.Name != "PAYLOAD_ENCODER_KEY" {
 
-	}
+            raw, err := spellFidelius.Fidelius.Encode([]byte(value))
+            if err != nil {
+                misc.PanicWarn("Can't encode runes", true)
+            }
 
-	for _, macroVal := range spell.Macros {
-		if macroVal.Macro != "" && macroVal.Value != "" {
-			rawMacroValEncoded, _ := spellFidelius.Fidelius.Encode([]byte(macroVal.Value))
-			macroValEncodedBase64 := base64.StdEncoding.EncodeToString(rawMacroValEncoded)
-			gccArgs = append(gccArgs, fmt.Sprintf("-D%s=\"%s\"", macroVal.Macro, macroValEncodedBase64))
+            value = base64.StdEncoding.EncodeToString(raw)
+        }
 
-		}
+        fmt.Fprintf(&b, "#define %s %q\n", runeVal.Name, value)
+    }
 
-	}
+    for _, macroVal := range spell.Macros {
+        if macroVal.Macro == "" || macroVal.Value == "" {
+            continue
+        }
 
+        raw, err := spellFidelius.Fidelius.Encode([]byte(macroVal.Value))
+        if err != nil {
+            misc.PanicWarn("Can't encode macros", true)
+        }
+
+        value := base64.StdEncoding.EncodeToString(raw)
+
+        fmt.Fprintf(&b, "#define %s %q\n", macroVal.Macro, value)
+    }
+
+    err = os.WriteFile(
+        filepath.Join(_tmpDir, "generated_macros.h"),
+        []byte(b.String()),
+        0644,
+    )
+
+    if err != nil {
+        misc.PanicWarn("Can't Write generated_macros.h", true)
+    }
+
+    gccArgs = append(gccArgs, []string{"-include", filepath.Join(_tmpDir, "generated_macros.h")}...)
+
+    misc.SysLog("Successfuly wrote generated_macros.h", true)
 	misc.SysLog("Starting spell creating", true)
 	misc.SysLog("Copying the spell base source to the temp directory", true)
 
@@ -257,7 +285,7 @@ func malfoyExecute(runes map[string]*types.Rune) {
 
 	_gccCmd := exec.Command(_compilerPath, gccArgs...)
 	_gccCmd.Dir = _tmpDir
-	// _gccCmd.Stderr = os.Stdout;_gccCmd.Stdout = os.Stdout // debug
+	_gccCmd.Stderr = os.Stdout;_gccCmd.Stdout = os.Stdout // debug
 	if err := _gccCmd.Run(); err != nil {
 		misc.PanicWarn(fmt.Sprintf("Some error occurred during spell compilation: %s. Aborting...\n\n", err), true)
 		// fmt.Println("\nFormated: \n\n", _gccCmd, fmt.Sprintf("\n\nRaw: %v\n", _gccCmd.Args)) // debug
